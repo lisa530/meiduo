@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # 'meiduo_mall.apps.users', # 用户模块
     'users',
+    'contents', # 首页广告模块
 ]
 
 MIDDLEWARE = [

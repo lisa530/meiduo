@@ -1,9 +1,10 @@
 import re
 from django import http
 from django.db import DatabaseError
-from django.shortcuts import render
+from django.shortcuts import render,redirect
 from django.views import View
 from users.models import User
+from django.urls import reverse
 
 
 class RegisterView(View):
@@ -47,5 +48,11 @@ class RegisterView(View):
             user = User.objects.create_user(username=username,password=password,mobile=mobile)
         except DatabaseError:
             return render(request, 'register.html', {'register_errmsg': '注册失败'})
-        # 4.响应结果
-        return http.HttpResponse('注册成功,重定向到首页')
+
+        # 4.响应结果：重定向到首页
+        # return http.HttpResponse('注册成功,重定向到首页')
+
+        # return redirect('/')
+        # 使用reverse反向解析：
+        # reverse('contents:index') == '/'
+        return redirect(reverse('contents:index'))

@@ -17,3 +17,4 @@ def jinja2_environment(**options):
 
     # 返回环境对象
     return env
+

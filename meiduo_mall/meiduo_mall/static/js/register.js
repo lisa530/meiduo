@@ -38,6 +38,30 @@ let vm = new Vue({
                 this.error_name_message = '请输入5-20个字符的用户名';
                 this.error_name = true;
             }
+
+            // 判断用户名是否重复注册
+            if (this.error_name == false){ //只有当用户输入的用户名满足条件时才会去判断
+                let url = '/usernames/' + this.username +'/count/';
+                axios.get(url,{
+                    responseType: 'json' // 后端返回的数据类型
+                })
+                    // 请求成功，从响应体中中取出count的值
+                    .then(response =>{
+                        if (response.data.count == 1 ){
+                           this.error_name_message = '用户名已存在';
+                           // 将error_name 的值改为true（展示错误信息)
+                           this.error_name = true;
+                        }else{
+                            this.error_name = false;
+                        }
+
+                    })
+                    //请示失败 控制台输出错误信息
+                    .catch(error =>{
+                        console.log(error.response);
+                    })
+
+            }
         },
         // 校验密码
         check_password(){

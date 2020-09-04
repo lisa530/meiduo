@@ -5,6 +5,7 @@ from django.shortcuts import render,redirect
 from django.views import View
 from users.models import User
 from django.urls import reverse
+from django.contrib.auth import login
 
 
 class RegisterView(View):
@@ -49,7 +50,10 @@ class RegisterView(View):
         except DatabaseError:
             return render(request, 'register.html', {'register_errmsg': '注册失败'})
 
-        # 4.响应结果：重定向到首页
+        # 4. 实现状态操持写入session
+        login(request,user)
+
+        # 5.响应结果：重定向到首页
         # return http.HttpResponse('注册成功,重定向到首页')
 
         # return redirect('/')

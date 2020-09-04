@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     # 'meiduo_mall.apps.users', # 用户模块
     'users',
     'contents', # 首页广告模块
+    'verifications', # 验证码
 ]
 
 MIDDLEWARE = [
@@ -123,6 +124,14 @@ CACHES = {
     "session": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
+    # 图形验证码
+    "verify_code": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/2",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }

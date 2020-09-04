@@ -21,4 +21,7 @@ urlpatterns = [
     url(r'^', include('users.urls',namespace='users')),
     # 首页广告
     url(r'^', include('contents.urls',namespace='contents')),
+    # 验证码
+    url(r'^', include('verifications.urls')),
+
 ]

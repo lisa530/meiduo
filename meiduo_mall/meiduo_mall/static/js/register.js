@@ -10,20 +10,37 @@ let vm = new Vue({
         password2: '',
         mobile: '',
         allow:'',
+        image_code_url: '',
+        uuid: '',
+        image_code: '',
+
         //v-show,控制是否展示错误信息，默认为flase不展示
         error_name: false,
         error_password: false,
         error_password2: false,
         error_mobile: false,
         error_allow: false,
+        error_image_code: false, // 图形验证码
 
-        //error_message
-        error_name_message: '',
-        error_mobile_message: ''
+        //错误提示信息error_message
+        error_name_message: '', // 用户名错误提示信息
+        error_mobile_message: '',   // 手机号错误提示信息
+        error_image_code_message: '', // 图形验证码错误提示信息
 
+    },
+
+     mounted() { // 页面加载完会被调用的
+        // 生成图形验证码
+        this.generate_image_code();
     },
     //绑定事件
     methods:{
+        // 生成图形验证码的方法：封装的思想，代码复用
+        generate_image_code() {
+            this.uuid = generateUUID();
+            this.image_code_url = '/image_codes/' + this.uuid + '/';
+        },
+
         // 校验用户名
         check_username() {
             // 用户名是5-20个字符，[a-zA-Z0-9_-]
@@ -112,6 +129,17 @@ let vm = new Vue({
             })
         }
         },
+        // 校验图形验证码
+        check_image_code(){
+            if (this.image_code.length != 4){
+                this.error_image_code_message = '请输入图形验证码';
+                this.error_image_code = true;
+
+            }else {
+                this.error_image_code = false;
+            }
+        },
+
         // 校验是否勾选协议
         check_allow(){
             if(!this.allow) {

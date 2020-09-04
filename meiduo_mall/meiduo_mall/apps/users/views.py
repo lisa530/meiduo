@@ -78,3 +78,15 @@ class UsernameCountView(View):
         count = User.objects.filter(username=username).count()
         # 2. 返回结果数据
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': RETCODE.OK, 'count': count})
+
+
+class MobileCountView(View):
+    """判断手机号是否重复注册"""
+
+    def get(self,request,mobile):
+
+        # 1.查询数据库该手机号记录是否存在
+        count = User.objects.filter(mobile=mobile).count()
+        # 2. 返回响应
+        return http.JsonResponse({'code': RETCODE.OK, 'error_msg': RETCODE.OK, 'count': count})
+

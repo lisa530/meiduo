@@ -7,6 +7,7 @@ from users.models import User
 from django.urls import reverse
 from django.contrib.auth import login
 
+from meiduo_mall.utils.response_code import RETCODE
 
 class RegisterView(View):
     """用户注册"""
@@ -60,3 +61,20 @@ class RegisterView(View):
         # 使用reverse反向解析：
         # reverse('contents:index') == '/'
         return redirect(reverse('contents:index'))
+
+
+class UsernameCountView(View):
+    """用户名重复注册"""
+
+    def get(self,request,username):
+        """
+
+        :param request: 请求对象
+        :param username: 用户名
+        :return:
+        """
+
+        # 1.使用username查询出数据库中对应记录
+        count = User.objects.filter(username=username).count()
+        # 2. 返回结果数据
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': RETCODE.OK, 'count': count})

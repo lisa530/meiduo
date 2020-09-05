@@ -81,10 +81,20 @@ class SMSCodeView(View):
         logger.info(sms_code)  # 手动的输出日志，记录短信验证码
         # 保存短信验证码
         # sms_13155950101 key  短信验证码过期时间 短信验证码的值
-        redis_conn.setex('sms_%s' % mobile, constants.SMS_CODE_REDIS_EXPIRES,sms_code)
+        # redis_conn.setex('sms_%s' % mobile, constants.SMS_CODE_REDIS_EXPIRES,sms_code)
 
         # 保存发送短信验证码的标记
-        redis_conn.setex('send_flag_%s' % mobile, constants.SEND_SMS_CODE_INTERVAL, 1)
+        # redis_conn.setex('send_flag_%s' % mobile, constants.SEND_SMS_CODE_INTERVAL, 1)
+
+        # 创建redis管道
+        # 将命令添加到队列中
+        pl = redis_conn.pipeline()
+        # 保存短信验证码
+        pl.setex('sms_%s' % mobile, constants.SMS_CODE_REDIS_EXPIRES, sms_code)
+        # 执行短信验证码标记
+        pl.setex('send_flag_%s' % mobile, constants.SEND_SMS_CODE_INTERVAL, 1)
+        # 执行
+        pl.execute()
 
         # 发送短信,调用 CCP
         # mobile:接收短信手机号， sms_code短信  短信过期时间: 300秒 // 60(5分钟内有效) , 模板id

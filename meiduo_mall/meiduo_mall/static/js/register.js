@@ -85,6 +85,9 @@ let vm = new Vue({
                             this.error_image_code_message = response.data.errmsg;
                             this.error_image_code = true;
 
+                        }else{ // 4002 短信验证码错误
+                            this.error_sms_code_message = response.data.errmsg;
+                            this.error_sms_code = true;
                         }
                         this.send_flag = false;
                     }

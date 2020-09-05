@@ -1,9 +1,17 @@
 from django.shortcuts import render
 from django.views import View
-from verifications.libs.captcha.captcha import  captcha
 from django_redis import get_redis_connection
 from django import http
+
 from . import constants
+from verifications.libs.captcha.captcha import  captcha
+from meiduo_mall.utils.response_code import RETCODE
+import random,logging
+from verifications.libs.yuntongxun.ccp_sms import CCP
+
+
+# 创建日志输出器
+logger = logging.getLogger('django')
 
 
 class ImageCodeView(View):
@@ -25,5 +33,52 @@ class ImageCodeView(View):
         # 3 响应图片验证码
         return http.HttpResponse(image, content_type='image/jpg')
 
+
+class SMSCodeView(View):
+    """短信验证码"""
+
+    def get(self,request,mobile):
+        """
+        发送短信业务逻辑
+        :param request:
+        :param mobile:
+        :return:
+        """
+        # 1.接收参数
+        image_code_client = request.GET.get('image_code')
+        uuid = request.GET.get('uuid')
+        # 2 校验参数
+        # mobile不需要在视图中校验，在url中使用正则校验成功才能进入视图
+        if not all([image_code_client, uuid]):
+            return http.HttpResponseForbidden('缺少必传参数')
+
+        # 3.提取图形验证码
+        redis_conn = get_redis_connection('verify_code')
+        # 从redis中提取图形验证码，以前怎么存现在怎么取
+        image_code_server = redis_conn.get('img_%s' % uuid)
+        # 如果图形验证码失效, 提示错误信息
+        if image_code_server is None:
+            return http.HttpResponseForbidden('图形验证码失效')
+        # 存在,则删除图形验证码
+        redis_conn.delete('img_%s' % uuid)
+
+        # 4.对比图形验证码，用户输入的和redis中保存的图形验证码进行比较
+        image_code_server = image_code_server.decode() # 将bytes转成字符串
+        if image_code_client.lower() != image_code_server.lower(): # 转小写
+            return http.JsonResponse({'code': RETCODE.OK,'errmsg':'OK'})
+
+        # 5. 生成短信验证码
+        # 生成随机6位数短信验证码
+        sms_code = '%06d' % random.randint(0,999999)
+        logger.info(sms_code)  # 手动的输出日志，记录短信验证码
+        # 保存短信验证码
+        # sms_13155950101 key  短信验证码过期时间 短信验证码的值
+        redis_conn.setex('sms_%s' % mobile, constants.SMS_CODE_REDIS_EXPIRES,sms_code)
+
+        # 发送短信,调用 CCP
+        # mobile:接收短信手机号， sms_code短信  短信过期时间: 300秒 // 60(5分钟内有效) , 模板id
+        CCP().send_template_sms(mobile, [sms_code, constants.SMS_CODE_REDIS_EXPIRES // 60], constants.SEND_SMS_TEMPLATE_ID)
+        # 6. 响应结果
+        return http.JsonResponse({'code': RETCODE.OK,'errmsg': '发送短信成功'})
 
 

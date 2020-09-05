@@ -102,7 +102,7 @@ WSGI_APPLICATION = 'meiduo_mall.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'HOST': '192.168.3.66',
+        'HOST': '127.0.0.1',
         'PORT': 3306,
         'PASSWORD': '123456',
         'USER':'lisa',
@@ -115,7 +115,7 @@ CACHES = {
     # 默认
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://192.168.3.66:6379/0",
+        "LOCATION": "redis://127.0.0.1:6379/0",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }

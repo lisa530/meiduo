@@ -80,6 +80,15 @@ class LogOutView(View):
         # 响应结果
         return response
 
+
+class UserInfoView(View):
+    """用户中心"""
+
+    def get(self,request):
+        """提供用户中心页页"""
+        return render(request, 'user_center_info.html')
+
+
 class RegisterView(View):
     """用户注册"""
 

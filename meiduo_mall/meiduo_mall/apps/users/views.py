@@ -56,8 +56,14 @@ class LoginView(View):
             # 记住了登录： 状态保持为两周：默认是两周
             request.session.set_expiry(None)
 
+        # 重定向到首页
+        response = redirect(reverse('contents:index'))
+        # 用户名写入到cookie中，过期时间为两周
+        # response.set_cookie('key', 'val', 'expiry')
+        response.set_cookie('username', user.username,max_age=3600 * 24 * 15)
+
         # 5. 响应结果
-        return redirect(reverse('contents:index'))
+        return response
 
 
 class RegisterView(View):

@@ -5,7 +5,7 @@ from django.shortcuts import render,redirect
 from django.views import View
 from users.models import User
 from django.urls import reverse
-from django.contrib.auth import login
+from django.contrib.auth import login,logout
 from django_redis import get_redis_connection
 from django.contrib.auth import authenticate
 
@@ -65,6 +65,20 @@ class LoginView(View):
         # 5. 响应结果
         return response
 
+
+class LogOutView(View):
+    """用户退出登录"""
+
+    def get(self,request):
+
+        # 1.清除状态保持信息
+        logout(request)
+        # 2.退出登录后重定向到首页
+        response = redirect(reverse('contents:index'))
+        # 3.删除cookie中的用户名
+        response.delete_cookie('username')
+        # 响应结果
+        return response
 
 class RegisterView(View):
     """用户注册"""

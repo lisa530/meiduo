@@ -8,6 +8,7 @@ from verifications.libs.captcha.captcha import  captcha
 from meiduo_mall.utils.response_code import RETCODE
 import random,logging
 from verifications.libs.yuntongxun.ccp_sms import CCP
+from celery_tasks.sms.tasks import send_sms_code
 
 
 # 创建日志输出器
@@ -98,7 +99,11 @@ class SMSCodeView(View):
 
         # 发送短信,调用 CCP
         # mobile:接收短信手机号， sms_code短信  短信过期时间: 300秒 // 60(5分钟内有效) , 模板id
-        CCP().send_template_sms(mobile, [sms_code, constants.SMS_CODE_REDIS_EXPIRES // 60], constants.SEND_SMS_TEMPLATE_ID)
+        # CCP().send_template_sms(mobile, [sms_code, constants.SMS_CODE_REDIS_EXPIRES // 60], constants.SEND_SMS_TEMPLATE_ID)
+
+        # 使用celery异步发送短信验证码
+        send_sms_code.delay(mobile,sms_code) # 千万不要忘记写delay
+
         # 6. 响应结果
         return http.JsonResponse({'code': RETCODE.OK,'errmsg': '发送短信成功'})
 

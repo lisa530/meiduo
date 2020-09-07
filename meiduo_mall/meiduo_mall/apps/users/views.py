@@ -10,6 +10,19 @@ from django_redis import get_redis_connection
 
 from meiduo_mall.utils.response_code import RETCODE
 
+
+class LoginView(View):
+    """提供用户用登录页面"""
+
+    def get(self, request):
+        """
+        提供登录界面
+        :param request: 请求对象
+        :return: 登录界面
+        """
+        return render(request, 'login.html')
+
+
 class RegisterView(View):
     """用户注册"""
 
@@ -103,4 +116,6 @@ class MobileCountView(View):
         count = User.objects.filter(mobile=mobile).count()
         # 2. 返回响应
         return http.JsonResponse({'code': RETCODE.OK, 'error_msg': RETCODE.OK, 'count': count})
+
+
 

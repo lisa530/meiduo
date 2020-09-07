@@ -86,7 +86,14 @@ class UserInfoView(View):
 
     def get(self,request):
         """提供用户中心页页"""
-        return render(request, 'user_center_info.html')
+        # 用户认证成功
+        if request.user.is_authenticated():
+
+            return render(request, 'user_center_info.html')
+        else:
+            # 用户认证失败,跳转到首页
+            return redirect(reverse('users:login'))
+        # return render(request, 'user_center_info.html')
 
 
 class RegisterView(View):

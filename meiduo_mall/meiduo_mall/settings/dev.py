@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'users',
     'contents', # 首页广告模块
     'verifications', # 验证码
+    'oauth', # QQ登录
 ]
 
 MIDDLEWARE = [

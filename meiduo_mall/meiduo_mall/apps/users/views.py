@@ -8,8 +8,24 @@ from django.urls import reverse
 from django.contrib.auth import login,logout
 from django_redis import get_redis_connection
 from django.contrib.auth import authenticate
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from meiduo_mall.utils.response_code import RETCODE
+
+
+class UserInfoView(LoginRequiredMixin,View):
+    """用户中心"""
+
+    def get(self,request):
+        """提供用户中心页页"""
+        # 用户认证成功
+        # if request.user.is_authenticated():
+        #
+        #     return render(request, 'user_center_info.html')
+        # else:
+        #     # 用户认证失败,跳转到首页
+        #     return redirect(reverse('users:login'))
+        return render(request, 'user_center_info.html')
 
 
 class LoginView(View):
@@ -56,8 +72,15 @@ class LoginView(View):
             # 记住了登录： 状态保持为两周：默认是两周
             request.session.set_expiry(None)
 
-        # 重定向到首页
-        response = redirect(reverse('contents:index'))
+        # 先取出next查询字符串
+        next = request.GET.get('next')
+        # 判断 next是否存在
+        if next:
+            # 重定向到next
+            response = redirect(next)
+        else:
+            # 重定向到首页
+            response = redirect(reverse('contents:index'))
         # 用户名写入到cookie中，过期时间为两周
         # response.set_cookie('key', 'val', 'expiry')
         response.set_cookie('username', user.username,max_age=3600 * 24 * 15)
@@ -81,19 +104,7 @@ class LogOutView(View):
         return response
 
 
-class UserInfoView(View):
-    """用户中心"""
 
-    def get(self,request):
-        """提供用户中心页页"""
-        # 用户认证成功
-        if request.user.is_authenticated():
-
-            return render(request, 'user_center_info.html')
-        else:
-            # 用户认证失败,跳转到首页
-            return redirect(reverse('users:login'))
-        # return render(request, 'user_center_info.html')
 
 
 class RegisterView(View):

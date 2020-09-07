@@ -28,7 +28,12 @@
 							<div v-show="error_username" class="user_error">请输入正确的用户名或手机号</div>
 							<input type="password" v-model="password" @blur="check_password" name="password" class="pass_input" placeholder="请输入密码">
 							<div v-show="error_password" class="pwd_error">密码最少8位，最长20位</div>
-							<div class="more_input clearfix">
+
+                             {% if account_errmsg %}
+                                <div class="pwd_error">{{ account_errmsg }}</div>
+                            {% endif %}
+
+                            <div class="more_input clearfix">
 								<input type="checkbox" v-model="remembered" name="remembered">
 								<label>记住登录</label>
 							</div>

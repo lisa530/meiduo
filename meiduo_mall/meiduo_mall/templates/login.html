@@ -29,7 +29,7 @@
 							<input type="password" v-model="password" @blur="check_password" name="password" class="pass_input" placeholder="请输入密码">
 							<div v-show="error_password" class="pwd_error">密码最少8位，最长20位</div>
 
-                             {% if account_errmsg %}
+                            {% if account_errmsg %}
                                 <div class="pwd_error">{{ account_errmsg }}</div>
                             {% endif %}
 

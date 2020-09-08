@@ -1,6 +1,26 @@
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer, BadData
 from django.conf import settings
 from oauth import constants_oauth
+
+
+def check_access_token(access_token_openid):
+    """
+    反序列化
+    :param access_token_openid: openid密文
+    :return: openid明文
+    """
+    # 创建序列化器对象：序列化和反序列化的对象的参数必须是一模一样的
+    s = Serializer(settings.SECRET_KEY, constants_oauth.ACCESS_TOKEN_EXPIRES)
+
+    # 反序列化openid
+    try:
+        data = s.loads(access_token_openid)
+    except BadData: # openid密文过期
+        return None
+    else:
+        # 返回解密后的openid
+        return data.get('openid')
+
 
 def generate_access_token(openid):
     """

@@ -31,7 +31,7 @@ SECRET_KEY = 'm43r4k2t&d1b)k%4x&q^qz-t(mttwdc3r494#nw!ws+&$-g(g7'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['www.meiduo.site','127.0.0.1']
 
 
 # Application definition
@@ -236,3 +236,8 @@ AUTHENTICATION_BACKENDS = ['users.utils.UsernameMobileBackend']
 
 # 判断用户是否登录后，指定未登录用户重定向的地址
 LOGIN_URL = '/login/'
+
+# QQ登录的配置参数
+QQ_CLIENT_ID = '101830856'
+QQ_CLIENT_SECRET = '1e551b39e068fe51d9fd5a44adb32744'
+QQ_REDIRECT_URI = 'http://www.meiduo.site:8000/oauth_callback'

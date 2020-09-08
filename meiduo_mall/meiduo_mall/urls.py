@@ -23,5 +23,7 @@ urlpatterns = [
     url(r'^', include('contents.urls',namespace='contents')),
     # 验证码
     url(r'^', include('verifications.urls')),
+    # QQ登录
+    url(r'^', include('oauth.urls')),
 
 ]

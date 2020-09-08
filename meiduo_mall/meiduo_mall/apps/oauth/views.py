@@ -44,7 +44,8 @@ class QQAuthUserView(View):
         except OAuthQQUser.DoesNotExist:
 
             # openid未绑定过美多商城用户
-            return render(request, 'oauth_callback.html')
+            context = {'access_token_openid': openid}  # 将openid渲染到模板中，交给前端进行保存
+            return render(request, 'oauth_callback.html',context)
         else:
             # openid绑定过美多商城用户：oauth_user.user表示从QQ登陆模型类对象中找到关联的用户模型类对象
             login(request,oauth_user.user)

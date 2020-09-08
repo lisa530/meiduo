@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.views import View
 from QQLoginTool.QQtool import OAuthQQ
+from .models import OAuthQQUser
 from django.conf import settings
 from django import http
 
@@ -35,6 +36,7 @@ class QQAuthUserView(View):
         except Exception as e:
             logger.error(e)
             return http.HttpResponseServerError('OAuth2.0认证失败')
+        # 使用openid查询该用户是否绑定过美多商城用户
         pass
 
 

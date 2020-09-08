@@ -8,6 +8,7 @@ from django.contrib.auth import login
 
 from meiduo_mall.utils.response_code import RETCODE
 import logging
+from .utils import generate_access_token
 
 
 # 创建日志输出器
@@ -44,7 +45,9 @@ class QQAuthUserView(View):
         except OAuthQQUser.DoesNotExist:
 
             # openid未绑定过美多商城用户
-            context = {'access_token_openid': openid}  # 将openid渲染到模板中，交给前端进行保存
+            access_token_openid = generate_access_token(openid)
+            context = {'access_token_openid': access_token_openid}
+            # 将加密后的openid进行渲染返回
             return render(request, 'oauth_callback.html',context)
         else:
             # openid绑定过美多商城用户：oauth_user.user表示从QQ登陆模型类对象中找到关联的用户模型类对象

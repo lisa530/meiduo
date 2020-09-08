@@ -1,9 +1,10 @@
-from django.shortcuts import render
+from django.shortcuts import render,redirect
 from django.views import View
 from QQLoginTool.QQtool import OAuthQQ
 from .models import OAuthQQUser
 from django.conf import settings
 from django import http
+from django.contrib.auth import login
 
 from meiduo_mall.utils.response_code import RETCODE
 import logging
@@ -25,7 +26,7 @@ class QQAuthUserView(View):
             return http.HttpResponseForbidden('获取code失败')
 
         # 2.创建工具对象
-        oauth = oauth = OAuthQQ(client_id=settings.QQ_CLIENT_ID, client_secret=settings.QQ_CLIENT_SECRET,
+        oauth = OAuthQQ(client_id=settings.QQ_CLIENT_ID, client_secret=settings.QQ_CLIENT_SECRET,
                             redirect_uri=settings.QQ_REDIRECT_URI)
 
         try:
@@ -36,8 +37,27 @@ class QQAuthUserView(View):
         except Exception as e:
             logger.error(e)
             return http.HttpResponseServerError('OAuth2.0认证失败')
-        # 使用openid查询该用户是否绑定过美多商城用户
-        pass
+
+        # 3.使用openid判断该QQ用户是否绑定过美多商城的用户
+        try:
+            oauth_user = OAuthQQUser.objects.get(openid=openid)
+        except OAuthQQUser.DoesNotExist:
+
+            # openid未绑定过美多商城用户
+            return render(request, 'oauth_callback.html')
+        else:
+            # openid绑定过美多商城用户：oauth_user.user表示从QQ登陆模型类对象中找到关联的用户模型类对象
+            login(request,oauth_user.user)
+            # 提取state参数
+            next = request.GET.get('state')
+            # 重定向到state:从哪来，QQ登录完之后回哪而去
+            response = redirect(next)
+            # 将用户名写入到 cookie中， 有效期为15天
+            response.set_cookie('username', oauth_user.user.username, max_age=3600 * 24 * 15)
+
+            # 响应QQ登录结果
+            return response
+
 
 
 class QQAuthURLView(View):

@@ -13,11 +13,34 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from meiduo_mall.utils.response_code import RETCODE
 from meiduo_mall.utils.views import LoginRequiredJSONMixin
 from celery_tasks.email.tasks import send_verify_email
-from . utils import generate_verify_email_url
+from . utils import generate_verify_email_url,check_verify_email_token
 
 
 # 创建日志输出器
 logger = logging.getLogger('django')
+
+
+class VerifyEmailView(View):
+    """验证邮件链接"""
+    def get(self,request):
+        # 1.接收参数和校验参数
+        token = request.GET.get('token')
+        if not token:
+            return http.HttpResponseForbidden('缺少token')
+        # 3. 从token中提取用户的信息(user_id)
+        user = check_verify_email_token(token)
+        if not user:
+            return http.HttpResponseBadRequest('无效的token')
+        # 将用户的email_active字段设置为True
+        try:
+            user.email_active = True
+            user.save()
+        except Exception as e:
+            logger.error(e)
+            return http.HttpResponseServerError('激活邮件失败')
+        # 返回邮箱验证结果： 重定向到用户中心
+        return  redirect(reverse('users:info'))
+
 
 
 class EmailView(View):
@@ -42,9 +65,9 @@ class EmailView(View):
             return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg':'添加邮箱失败'})
 
         # 4. 调用加密后的验证邮件链接方法
-        verify_url = generate_verify_email_url(request.user)
-        # 发送邮件
-        send_verify_email.delay(email, verify_url)
+        verify_url = generate_verify_email_url(request.user) # 从当前登录用户中取出user
+        # 使用celery发送邮件
+        send_verify_email.delay(email, verify_url) # 接收邮件地址，验证邮件链接
 
         # 响应结果
         return http.JsonResponse({'code':RETCODE.OK ,'errmsg': 'OK'})

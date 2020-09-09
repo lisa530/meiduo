@@ -1,9 +1,38 @@
 from django.contrib.auth.backends import ModelBackend
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer, BadData
 import re
 from .models import User
 from django.conf import settings
 from . import  constants
+
+
+def check_verify_email_token(token):
+    """
+        反序列化token,获取到user
+        :param token: 序列化后的用户信息
+        :return: user
+    """
+    # 创建序列化器
+    s = Serializer(settings.SECRET_KEY, constants.VERIFY_EMAIL_TOKEN_EXPIRES)
+    # 使用loads对token进行解密
+    try:
+        data = s.loads(token)
+    except BadData:
+        return None
+    else:
+
+        # 从data中取出user_id和email
+        user_id = data.get('user_id')
+        email = data.get('email')
+        # 使用user_id和email查询出要验证邮箱的用户
+        try:
+            user = User.objects.get(id=user_id,email=email)
+            # 用户不存在抛出异步
+        except User.DoesNotExist:
+            return None
+        # 返回用户
+        else:
+            return user
 
 
 def generate_verify_email_url(user):
@@ -21,6 +50,8 @@ def generate_verify_email_url(user):
     token = s.dumps(data).decode()
     # 3.返回加密后的邮箱验证链接
     return settings.EMAIL_VERIFY_URL + '?token=' + token
+
+
 
 def get_user_by_account(account):
     """

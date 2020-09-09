@@ -11,6 +11,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from meiduo_mall.utils.response_code import RETCODE
+from meiduo_mall.utils.views import LoginRequiredJSONMixin
 
 # 创建日志输出器
 logger = logging.getLogger('django')

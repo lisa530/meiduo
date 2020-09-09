@@ -13,6 +13,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from meiduo_mall.utils.response_code import RETCODE
 from meiduo_mall.utils.views import LoginRequiredJSONMixin
 from celery_tasks.email.tasks import send_verify_email
+from . utils import generate_verify_email_url
+
 
 # 创建日志输出器
 logger = logging.getLogger('django')
@@ -39,8 +41,9 @@ class EmailView(View):
             logger.error(e)
             return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg':'添加邮箱失败'})
 
-        # 4. 发送邮件
-        verify_url = 'www.lisa.com'
+        # 4. 调用加密后的验证邮件链接方法
+        verify_url = generate_verify_email_url(request.user)
+        # 发送邮件
         send_verify_email.delay(email, verify_url)
 
         # 响应结果

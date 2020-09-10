@@ -27,6 +27,7 @@ class AddressView(LoginRequiredMixin,View):
         """展示收货地址逻辑"""
         return render(request,'user_center_site.html')
 
+
 class VerifyEmailView(View):
     """验证邮件链接"""
     def get(self,request):

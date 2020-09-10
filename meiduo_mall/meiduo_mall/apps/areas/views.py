@@ -45,7 +45,7 @@ class AreasView(View):
             # 查询城市区区县数据
             try:
                 # 根据area_id查询，如果area_id是省级id，那么查询的是市级数据
-                parent_model = Area.objects.get(parent_id=area_id)
+                parent_model = Area.objects.get(id=area_id)
                 # 一查多： 一类对象.related_name属性的值
                 sub_model_list = parent_model.subs.all()
 
@@ -69,4 +69,4 @@ class AreasView(View):
 
             except Exception as e:
                 logger.error(e)
-                return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '查询省份数据错误'})
+                return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '查询城市或区县数据错误'})

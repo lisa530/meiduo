@@ -20,6 +20,13 @@ from . utils import generate_verify_email_url,check_verify_email_token
 logger = logging.getLogger('django')
 
 
+class AddressView(LoginRequiredMixin,View):
+    """展示收货地址"""
+
+    def get(self,request):
+        """展示收货地址逻辑"""
+        return render(request,'user_center_site.html')
+
 class VerifyEmailView(View):
     """验证邮件链接"""
     def get(self,request):

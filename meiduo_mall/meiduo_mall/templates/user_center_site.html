@@ -133,27 +133,39 @@
                 <div class="form_group">
                     <label>*所在地区：</label>
                     <select v-model="form_address.province_id">
-                        <option value="0">请选择</option>
-                        <option value="1">北京</option>
-                        <option value="2">上海</option>
-                        <option value="3">广州</option>
-                        <option value="4">深圳</option>
+                        <option v-for="province in provinces" :value="province.id">[[ province.name ]]</option>
                     </select>
                     <select v-model="form_address.city_id">
-                        <option value="0">请选择</option>
-                        <option value="1">北京</option>
-                        <option value="2">上海</option>
-                        <option value="3">广州</option>
-                        <option value="4">深圳</option>
+                        <option v-for="city in cities" :value="city.id">[[ city.name ]]</option>
                     </select>
                     <select v-model="form_address.district_id">
-                        <option value="0">请选择</option>
-                        <option value="1">东城区</option>
-                        <option value="2">西城区</option>
-                        <option value="3">昌平区</option>
-                        <option value="4">海淀区</option>
+                        <option v-for="district in districts" :value="district.id">[[ district.name ]]</option>
                     </select>
                 </div>
+{#                <div class="form_group">#}
+{#                    <label>*所在地区：</label>#}
+{#                    <select v-model="form_address.province_id">#}
+{#                        <option value="0">请选择</option>#}
+{#                        <option value="1">北京</option>#}
+{#                        <option value="2">上海</option>#}
+{#                        <option value="3">广州</option>#}
+{#                        <option value="4">深圳</option>#}
+{#                    </select>#}
+{#                    <select v-model="form_address.city_id">#}
+{#                        <option value="0">请选择</option>#}
+{#                        <option value="1">北京</option>#}
+{#                        <option value="2">上海</option>#}
+{#                        <option value="3">广州</option>#}
+{#                        <option value="4">深圳</option>#}
+{#                    </select>#}
+{#                    <select v-model="form_address.district_id">#}
+{#                        <option value="0">请选择</option>#}
+{#                        <option value="1">东城区</option>#}
+{#                        <option value="2">西城区</option>#}
+{#                        <option value="3">昌平区</option>#}
+{#                        <option value="4">海淀区</option>#}
+{#                    </select>#}
+{#                </div>#}
                 <div class="form_group">
                     <label>*详细地址：</label>
                     <input v-model="form_address.place" @blur="check_place" type="text" class="place">

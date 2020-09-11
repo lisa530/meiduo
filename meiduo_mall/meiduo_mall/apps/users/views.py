@@ -75,6 +75,19 @@ class AddressCreateView(LoginRequiredJSONMixin,View):
             logger.error(e)
             return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '新增地址失败'})
 
+        # 构造新增地址字典数据
+        address_dict = {
+            "id": address.id,
+            "title": address.title,
+            "receiver": address.receiver,
+            "province": address.province.name,
+            "city": address.city.name,
+            "district": address.district.name,
+            "place": address.place,
+            "mobile": address.mobile,
+            "tel": address.tel,
+            "email": address.email
+        }
         # 4.响应数据
         return http.JsonResponse({'code':RETCODE.OK,'errmsg': '新增地址成功'})
 

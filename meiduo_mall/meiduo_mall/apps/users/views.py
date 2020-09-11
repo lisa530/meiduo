@@ -85,6 +85,21 @@ class UpdateDestoryAddressView(LoginRequiredJSONMixin, View):
         # 3.响应新的地址信息给前端渲染
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg':'修改地址成功', 'address': address_dict})
 
+    def delete(self,request, address_id):
+        """删除指定收货地址"""
+        # 实现指定地址的逻辑删除：is_delete=True
+        try:
+            # 查询当前要删除的地址
+            address = Address.objects.get(id=address_id)
+            address.is_deleted = True # 修改is_deleted的值
+            address.save() # 保存
+
+        except Exception as e:
+            logger.error(e)
+            return http.JsonResponse({'code':RETCODE.DBERR, 'errmsg': '删除地址失败'})
+        # 响应结果
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '删除地址成功'})
+
 
 class AddressCreateView(LoginRequiredJSONMixin,View):
     """新增用户地址"""

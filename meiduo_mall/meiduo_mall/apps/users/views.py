@@ -103,8 +103,39 @@ class AddressView(LoginRequiredMixin,View):
     """展示收货地址"""
 
     def get(self,request):
-        """展示收货地址逻辑"""
-        return render(request,'user_center_site.html')
+        """查询并展示用户收货地址"""
+
+        # 1.获取当前登录用户对象
+        login_user = request.user
+        # 2.使用当前登录对象和is_delete=False 作为查询条件
+        addresses = Address.objects.filter(user=login_user, is_deleted=False)
+        # 3. 将用户地址模型类列表 转为 字典列表：
+        address_list = []
+        for address in addresses:
+            address_dict = {
+                "id": address.id,
+                "title": address.title,
+                "receiver": address.receiver,
+                "province": address.province.name, # 省名称
+                "citry": address.city.name, # 市名称
+                "district": address.district.name, # 区或县名称
+                "place": address.place,
+                "mobile": address.mobile,
+                "tel": address.tel,
+                "email": address.email
+            }
+            address_list.append(address_dict)
+
+        # 因为JsonResponse和Vue.js不认识模型类型，只有Django和Jinja2模板引擎认识
+        # 构造模板上下文
+
+        context = {
+            'default_address_id': login_user.default_address_id, # 从当前登录用户中取出默认收货地址id
+            'addresses': address_list
+        }
+
+        # 4. 响应Json数据
+        return render(request,'user_center_site.html',context)
 
 
 class VerifyEmailView(View):

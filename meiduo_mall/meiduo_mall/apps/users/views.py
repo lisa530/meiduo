@@ -21,6 +21,26 @@ from . import constants
 logger = logging.getLogger('django')
 
 
+class DefaultAddressView(LoginRequiredJSONMixin, View):
+    """设置默认收货地址"""
+
+    def put(self,request, address_id):
+        """实现设置默认地址"""
+        # 1. 查询出哪个地址作为登录用户的默认地址
+        try:
+            address = Address.objects.get(id=address_id)
+            # 将指定的地址设置为当前登录用户的默认地址
+            request.user.default_address = address
+            request.user.save()
+
+        except Exception as e:
+            logger.error(e)
+            return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '设置默认地址失败'})
+
+        # 返回响应数据
+        return  http.JsonResponse({'code':RETCODE.OK, 'errmsg': '设置默认地址成功'})
+
+
 class UpdateDestoryAddressView(LoginRequiredJSONMixin, View):
     """更新和删除地址"""
 

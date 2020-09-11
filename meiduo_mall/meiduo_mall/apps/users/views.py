@@ -21,6 +21,32 @@ from . import constants
 logger = logging.getLogger('django')
 
 
+class UpdateTitleAddressView(LoginRequiredJSONMixin, View):
+    """更新地址标题"""
+
+    def put(self,request, address_id):
+        """实现更新地址标题逻辑"""
+        # 1. 接收参数：title
+        json_dict = json.loads(request.body.decode())
+        title = json_dict.get('title')
+        # 2. 校验参数
+        if not title:
+            return http.HttpResponseForbidden('缺少title')
+
+        try:
+            # 3. 查询当前要更新的标题的地址
+            address = Address.objects.get(id=address_id)
+            # 将新的地址标题覆盖原有地址标题
+            address.title = title
+            address.save()
+        except Exception as e:
+            logger.error(e)
+            return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '更新标题失败'})
+
+        # 4. 响应结果
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '更新标题成功'})
+
+
 class DefaultAddressView(LoginRequiredJSONMixin, View):
     """设置默认收货地址"""
 

@@ -14,6 +14,7 @@ from meiduo_mall.utils.response_code import RETCODE
 from meiduo_mall.utils.views import LoginRequiredJSONMixin
 from celery_tasks.email.tasks import send_verify_email
 from . utils import generate_verify_email_url,check_verify_email_token
+from . import constants
 
 
 # 创建日志输出器
@@ -24,6 +25,12 @@ class AddressCreateView(LoginRequiredJSONMixin,View):
     """新增用户地址"""
 
     def post(self,request):
+        """保存用户地址实现"""
+
+        # 判断用户地址数量是否超过上线： 查询当前登录用户的地址数据
+        count = Address.objects.filter(user=request.user).count()
+        if count > constants.USER_ADDRESS_COUNTS_LIMIT:
+            return http.JsonResponse({'code': RETCODE.THROTTLINGERR, 'errmsg': '超出用户地址上限'})
 
         # 1.接收前端传递的参数(json）
         json_str = request.body.decode()

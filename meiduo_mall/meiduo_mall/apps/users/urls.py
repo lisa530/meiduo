@@ -29,5 +29,7 @@ urlpatterns = [
     # 设置默认收货地址
     url(r'^addresses/(?P<address_id>\d+)/default/$',views.DefaultAddressView.as_view()),
     #  更新标题
-    url(r'^addresses/(?P<address_id>\d+)/title/$',views.UpdateTitleAddressView.as_view())
+    url(r'^addresses/(?P<address_id>\d+)/title/$',views.UpdateTitleAddressView.as_view()),
+    # 修改密码, name=pass 给路由取一个别名
+    url(r'^password/$', views.ChangePasswordView.as_view(), name='pass'),
 ]

@@ -64,6 +64,13 @@ class AddressCreateView(LoginRequiredJSONMixin,View):
                 tel = tel,
                 email = email,
             )
+
+            # 如果当前登录用户没有默认的地址,我们需要指定默认的地址
+            if not request.user.default_address:
+                #  address对象赋值给request.user.default_address
+                request.user.default_address = address
+                request.user.save() # 保存到用户表中
+
         except Exception as e:
             logger.error(e)
             return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '新增地址失败'})

@@ -3,7 +3,7 @@ from django import http
 from django.db import DatabaseError
 from django.shortcuts import render,redirect
 from django.views import View
-from users.models import User
+from users.models import User,Address
 from django.urls import reverse
 from django.contrib.auth import login,logout
 from django_redis import get_redis_connection
@@ -18,6 +18,58 @@ from . utils import generate_verify_email_url,check_verify_email_token
 
 # 创建日志输出器
 logger = logging.getLogger('django')
+
+
+class AddressCreateView(LoginRequiredJSONMixin,View):
+    """新增用户地址"""
+
+    def post(self,request):
+
+        # 1.接收前端传递的参数(json）
+        json_str = request.body.decode()
+        json_dict = json.loads(json_str)
+        receiver = json_dict.get('receiver')
+        province_id = json_dict.get('province_id')
+        city_id = json_dict.get('city_id')
+        district_id = json_dict.get('district_id')
+        place = json_dict.get('place')
+        mobile = json_dict.get('mobile')
+        tel = json_dict.get('tel')
+        email = json_dict.get('email')
+
+        # 2. 校验参数是否齐全
+        if not all([receiver, province_id,city_id,district_id,mobile,place]):
+            return http.HttpResponseForbidden('缺少必传参数')
+        # 校验手机号，固定电话，邮箱格式
+        if not re.match(r'^1[3-9]\d{9}$', mobile):
+            return http.HttpResponseForbidden('参数mobile有误')
+        if tel:
+            if not re.match(r'^(0[0-9]{2,3}-)?([2-9][0-9]{6,7})+(-[0-9]{1,4})?$', tel):
+                return http.HttpResponseForbidden('参数tel有误')
+        if email:
+            if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
+                return http.HttpResponseForbidden('参数email有误')
+
+        # 3.保存用户传入的地址数据
+        try:
+            address = Address.objects.create(
+                user = request.user,
+                title = receiver,
+                receiver = receiver,
+                province_id = province_id,
+                city_id = city_id,
+                district_id = district_id,
+                place = place,
+                mobile = mobile,
+                tel = tel,
+                email = email,
+            )
+        except Exception as e:
+            logger.error(e)
+            return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '新增地址失败'})
+
+        # 4.响应数据
+        return http.JsonResponse({'code':RETCODE.OK,'errmsg': '新增地址成功'})
 
 
 class AddressView(LoginRequiredMixin,View):
@@ -48,7 +100,6 @@ class VerifyEmailView(View):
             return http.HttpResponseServerError('激活邮件失败')
         # 返回邮箱验证结果： 重定向到用户中心
         return  redirect(reverse('users:info'))
-
 
 
 class EmailView(View):

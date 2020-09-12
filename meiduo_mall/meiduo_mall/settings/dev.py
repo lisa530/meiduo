@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'verifications', # 验证码
     'oauth', # QQ登录
     'areas', # 省市区
+    'goods', # 商品
 ]
 
 MIDDLEWARE = [

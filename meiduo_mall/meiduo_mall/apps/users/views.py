@@ -196,16 +196,17 @@ class UpdateDestoryAddressView(LoginRequiredJSONMixin, View):
 class AddressCreateView(LoginRequiredJSONMixin,View):
     """新增用户地址"""
 
-    def post(self,request):
-        """保存用户地址实现"""
+    def post(self, reqeust):
+        """实现新增地址逻辑"""
 
-        # 判断用户地址数量是否超过上线： 查询当前登录用户的地址数据
-        count = Address.objects.filter(user=request.user).count()
+        # 判断用户地址数量是否超过上限：查询当前登录用户的地址数量
+        # count = Address.objects.filter(user=reqeust.user).count()
+        count = reqeust.user.addresses.count()  # 一查多，使用related_name查询
         if count > constants.USER_ADDRESS_COUNTS_LIMIT:
             return http.JsonResponse({'code': RETCODE.THROTTLINGERR, 'errmsg': '超出用户地址上限'})
 
-        # 1.接收前端传递的参数(json）
-        json_str = request.body.decode()
+        # 接收参数
+        json_str = reqeust.body.decode()
         json_dict = json.loads(json_str)
         receiver = json_dict.get('receiver')
         province_id = json_dict.get('province_id')
@@ -216,10 +217,9 @@ class AddressCreateView(LoginRequiredJSONMixin,View):
         tel = json_dict.get('tel')
         email = json_dict.get('email')
 
-        # 2. 校验参数是否齐全
-        if not all([receiver, province_id,city_id,district_id,mobile,place]):
+        # 校验参数
+        if not all([receiver, province_id, city_id, district_id, place, mobile]):
             return http.HttpResponseForbidden('缺少必传参数')
-        # 校验手机号，固定电话，邮箱格式
         if not re.match(r'^1[3-9]\d{9}$', mobile):
             return http.HttpResponseForbidden('参数mobile有误')
         if tel:
@@ -229,27 +229,25 @@ class AddressCreateView(LoginRequiredJSONMixin,View):
             if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
                 return http.HttpResponseForbidden('参数email有误')
 
-        # 3.保存用户传入的地址数据
+        # 保存用户传入的地址信息
         try:
             address = Address.objects.create(
-                user = request.user,
-                title = receiver,
-                receiver = receiver,
-                province_id = province_id,
-                city_id = city_id,
-                district_id = district_id,
-                place = place,
-                mobile = mobile,
-                tel = tel,
-                email = email,
+                user=reqeust.user,
+                title=receiver,  # 标题默认就是收货人
+                receiver=receiver,
+                province_id=province_id,
+                city_id=city_id,
+                district_id=district_id,
+                place=place,
+                mobile=mobile,
+                tel=tel,
+                email=email,
             )
 
-            # 如果当前登录用户没有默认的地址,我们需要指定默认的地址
-            if not request.user.default_address:
-                #  address对象赋值给request.user.default_address
-                request.user.default_address = address
-                request.user.save() # 保存到用户表中
-
+            # 如果登录用户没有默认的地址，我们需要指定默认地址
+            if not reqeust.user.default_address:
+                reqeust.user.default_address = address
+                reqeust.user.save()
         except Exception as e:
             logger.error(e)
             return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '新增地址失败'})
@@ -267,8 +265,9 @@ class AddressCreateView(LoginRequiredJSONMixin,View):
             "tel": address.tel,
             "email": address.email
         }
-        # 4.响应数据
-        return http.JsonResponse({'code':RETCODE.OK,'errmsg': '新增地址成功'})
+
+        # 响应新增地址结果：需要将新增的地址返回给前端渲染
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '新增地址成功', 'address': address_dict})
 
 
 class AddressView(LoginRequiredMixin,View):
@@ -302,7 +301,8 @@ class AddressView(LoginRequiredMixin,View):
         # 构造模板上下文
 
         context = {
-            'default_address_id': login_user.default_address_id, # 从当前登录用户中取出默认收货地址id
+            # 'default_address_id': login_user.default_address_id, # 从当前登录用户中取出默认收货地址id
+            'default_address_id': login_user.default_address_id or '0',
             'addresses': address_list
         }
 

@@ -27,5 +27,7 @@ urlpatterns = [
     url(r'^', include('oauth.urls')),
     # 省市区
     url(r'^', include('areas.urls')),
+    # 商品
+    url(r'^', include('goods.urls',namespace='goods')),
 
 ]

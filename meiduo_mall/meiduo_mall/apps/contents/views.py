@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.views import View
 
 from goods.models import GoodsChannelGroup,GoodsCategory,GoodsChannel
+from .models import ContentCategory,Content
 from collections import OrderedDict
 
 
@@ -58,9 +59,18 @@ class IndexView(View):
                 # 将二级类添加到一级类别的sub_cats
                 categories[group_id]['sub_cats'].append(cat2)
 
+        contents = OrderedDict()
+        # 查询所有广告类别
+        contents_categories = ContentCategory.objects.all()
+        for contents_categorie in contents_categories:
+            # 使用广告类别查询出未上架的广告内容并排序
+            # contents_category.key取出广告类别对应的广告内容
+            contents[contents_categorie.key] = contents_categorie.content_set.filter(status=True).order_by('sequence')
+
         # 构造上下文
         context = {
-            'categories':categories
+            'categories':categories,
+            'contents': contents
         }
 
         # 返回渲染后的数据

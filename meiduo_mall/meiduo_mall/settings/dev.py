@@ -239,6 +239,13 @@ AUTHENTICATION_BACKENDS = ['users.utils.UsernameMobileBackend']
 # 判断用户是否登录后，指定未登录用户重定向的地址
 LOGIN_URL = '/login/'
 
+# 指定自定义的Django文件存储类
+DEFAULT_FILE_STORAGE = 'meiduo_mall.utils.fastdfs.fdfs_storage.FastDFSStorage'
+
+# FastDFS相关参数
+FDFS_BASE_URL = 'http://192.168.3.74:8888/'
+
+
 # QQ登录的配置参数
 QQ_CLIENT_ID = '101830856'
 QQ_CLIENT_SECRET = '1e551b39e068fe51d9fd5a44adb32744'

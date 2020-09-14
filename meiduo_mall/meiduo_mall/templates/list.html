@@ -153,6 +153,11 @@
                     </li>
                 {% endfor %}
             </ul>
+
+{#  前端分嶡器插件#}
+        <div class="pagenation">
+                <div id="pagination" class="page"></div>
+            </div>
 		</div>
 	</div>
 	<div class="footer">
@@ -178,11 +183,11 @@
 	<script>
         $(function () {
             $('#pagination').pagination({
-                currentPage: 1,
-                totalPage: 3,
+                currentPage: {{ page_num }}, // 当前所在页码
+                totalPage: {{ total_page }}, // 总页数
                 callback:function (current) {
                     {#location.href = '/list/115/1/?sort=default';#}
-                    {#location.href = '/list/{{ category.id }}/' + current + '/?sort={{ sort }}';#}
+                    location.href = '/list/{{ category_id }}/' + current + '/?sort={{ sort }}';
                 }
             })
         });

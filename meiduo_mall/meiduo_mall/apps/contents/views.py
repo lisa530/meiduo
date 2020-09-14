@@ -6,7 +6,6 @@ from contents.models import ContentCategory
 from contents.utils import get_categories
 
 
-
 class IndexView(View):
     """首页广告"""
 

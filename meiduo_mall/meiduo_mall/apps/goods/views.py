@@ -3,10 +3,32 @@ from django.views import View
 from django import http
 from django.core.paginator import Paginator,EmptyPage
 
-from goods.models import GoodsCategory
+from goods.models import GoodsCategory,SKU
 from contents.utils import get_categories
 from .utils import get_breadcrumb
 from . import constants
+from meiduo_mall.utils.response_code import RETCODE
+
+
+class HotGoodsView(View):
+    """商品热销排行"""
+
+    def get(self,request,category_id):
+        """获取商品热销排行逻辑"""
+        skus = SKU.objects.filter(category_id=category_id, is_launched=True).order_by('-sales')[:2]
+        # 将模型类列表转成字典，构造json数据
+        hot_skus = []
+        for sku in skus:
+            sku_dict = {
+                'id': sku.id,
+                'name':sku.name,
+                'default_image_url':sku.default_image.url, # 一定要取全路径
+                'price': sku.price
+            }
+            hot_skus.append(sku_dict)
+
+        # 返回json数据
+        return http.JsonResponse({'code': RETCODE.OK,'errmsg':'OK', 'hot_skus': hot_skus})
 
 
 class ListView(View):

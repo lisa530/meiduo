@@ -120,24 +120,20 @@
 		<div class="l_wrap fl clearfix">
 			<div class="new_goods">
 				<h3>热销排行</h3>
-				<ul>
-					<li>
-						<a href="detail.html"><img src="{{ static('images/goods/goods001.jpg') }}"></a>
-						<h4><a href="detail.html">360手机 N6 Pro 全网通 6GB+128GB 极夜黑</a></h4>
-						<div class="price">￥3999.90</div>
-					</li>
-					<li>
-						<a href="detail.html"><img src="{{ static('images/goods/goods002.jpg') }}"></a>
-						<h4><a href="detail.html">360手机 N6 Pro 全网通 6GB+128GB 极夜黑</a></h4>
-						<div class="price">￥1666.80</div>
-					</li>
-				</ul>
+                <ul>
+                    <li v-for="sku in hot_skus">
+                        <a :href="sku.url"><img :src="sku.default_image_url"></a>
+                        <h4><a :href="sku.url">[[ sku.name ]]</a></h4>
+                        <div class="price">￥[[ sku.price ]]</div>
+                    </li>
+                </ul>
 			</div>
 		</div>
 		<div class="r_wrap fr clearfix">
 			<div class="sort_bar">
-				<a href="{{ url('goods:list', args=(category_id, 1))}}" ?sort=default" {% if sort=='default' %}class="active"{% endif %}>默认</a>
-				<a href="{{ url('goods:list', args=(category_id, 1)) }}?sort=price" {% if sort=='price' %}class="active"{% endif %}>价格</a>
+{#            url反向解析传递参数，通过args=() 参数顺序要和url中路径参数保持一致#}
+				<a href="{{ url('goods:list', args=(category_id, 1)) }}?sort=default" {% if sort=='default' %}class="active"{% endif %}>默认</a>
+                <a href="{{ url('goods:list', args=(category_id, 1)) }}?sort=price" {% if sort=='price' %}class="active"{% endif %}>价格</a>
                 <a href="{{ url('goods:list', args=(category_id, 1)) }}?sort=hot" {% if sort=='hot' %}class="active"{% endif %}>人气</a>
 			</div>
 			<ul class="goods_type_list clearfix">
@@ -168,14 +164,14 @@
 			<span>|</span>
 			<a href="#">招聘人才</a>
 			<span>|</span>
-			<a href="#">友情链接</a>		
+			<a href="#">友情链接</a>
 		</div>
 		<p>CopyRight © 2016 北京美多商业股份有限公司 All Rights Reserved</p>
 		<p>电话：010-****888    京ICP备*******8号</p>
 	</div>
 	</div>
 	<script type="text/javascript">
-        let category_id = "";
+        let category_id = "{{ category_id }}";
     </script>
 	<script type="text/javascript" src="{{ static('js/common.js') }}"></script>
 	<script type="text/javascript" src="{{ static('js/list.js') }}"></script>

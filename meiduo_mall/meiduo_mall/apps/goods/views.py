@@ -6,6 +6,7 @@ from django.core.paginator import Paginator,EmptyPage
 from goods.models import GoodsCategory
 from contents.utils import get_categories
 from .utils import get_breadcrumb
+from . import constants
 
 
 class ListView(View):
@@ -42,17 +43,22 @@ class ListView(View):
 
         # 创建分页器
         # Paginator('要分页的记录', '每页记录的条数')
-        paginator = Paginator(skus, 5) # 把skus进行分页，每页显示5条记录
+        paginator = Paginator(skus,constants.GOODS_LIST_LIMIT) # 把skus进行分页，每页显示5条记录
         try:
-            page_skus = paginator.page(page_num) # 获取当用户当查看的页数
+            page_skus = paginator.page(page_num) # 获取当用户查看的页数（分页后的数据)
         except EmptyPage: # page_num有误，返回404
             return http.HttpResponseNotFound('Empty Page')
         total_page = paginator.num_pages # 获取总页数
 
         # 构造上下文
         context = {
-            'categories': categories,
-            'breadcrumb': breadcrumb,
+            'categories': categories, # 商品分类
+            'breadcrumb': breadcrumb, # 面包屑导航
+            'page_skus': page_skus, # 要分页的数据
+            'total_page': total_page, # 总页数
+            'page_num': page_num, # 所在页
+            'category_id': category_id, # 三级分类id
+            'sort': sort  # 排序字段
         }
         # 响应结果
         return render(request,'list.html', context)

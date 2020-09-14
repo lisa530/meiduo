@@ -29,5 +29,7 @@ urlpatterns = [
     url(r'^', include('areas.urls')),
     # 商品
     url(r'^', include('goods.urls',namespace='goods')),
+    # 全文检索
+    url(r'^search/', include('haystack.urls')),
 
 ]

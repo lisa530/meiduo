@@ -29,11 +29,51 @@ class DetailView(View):
         # 3. 获取商品面包屑导航（接收一个category类别)
         breadcrumb = get_breadcrumb(sku.category) # 多查一： 通过sku对象.外键查询出 sku商品所属性类别
 
+        # 获取当前商品的规格，按规格的id进行排序
+        sku_specs = sku.specs.order_by('spec_id') # 一查多：一类模型类.related_name，通过sku.specs得到商品的规格信息
+        sku_key = []
+        # 遍历所有的商品规格
+        for spec in sku_specs:
+            # 将规格对应的选项id追加到列表中
+            sku_key.append(spec.option.id)  # 多查一： 多类模型类.外键
+
+        # 获取当前商品的所有SKU
+        skus = sku.spu.sku_set.all()
+        # 构建不同规格参数（选项）的sku字典
+        spec_sku_map = {}
+        for s in skus:
+            # 获取sku的规格信息,按规格id排序
+            s_specs = s.specs.order_by('spec_id') # 一查多：一类模型类.related_name
+            # 用于形成规格参数sku字典的键
+            key = []
+            for spec in sku_specs:
+                key.append(spec.option.id) # 将规格选项信息添加到列表中
+                # 向规格参数-sku字典添加记录
+                spec_sku_map[tuple(key)] = s.id
+            # 获取当前商品的规格信息
+            goods_specs = sku.spu.specs.order_by('id')
+            # 若当前sku的规格信息不完整，则不再继续
+            if len(sku_key) < len(goods_specs):
+                return
+            # 遍历当前sku规格信息，得到key和值
+            for index, spec in enumerate(goods_specs):
+                # 复制当前sku的规格键
+                key = sku_key[:]
+                # 查询所有规格选项信息
+                spec_options = spec.options.all()
+                # 遍历规格选项信息
+                for option in spec_options:
+                    # 将规格选项id赋值给 sku规格键
+                    key[index] = option.id
+                    option.sku_id = spec_sku_map.get(tuple(key))
+                spec.spec_options = spec_options
+
         # 4. 构造上下文
         context = {
             'categories': categories, # 商品分类
             'breadcrumb': breadcrumb, # 面包屑导航
-            'sku': sku # sku商品
+            'sku': sku, # sku商品
+            'specs': goods_specs
         }
 
         # 5. 响应结果

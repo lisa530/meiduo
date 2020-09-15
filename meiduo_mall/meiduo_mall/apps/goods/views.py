@@ -10,6 +10,36 @@ from . import constants
 from meiduo_mall.utils.response_code import RETCODE
 
 
+class DetailView(View):
+    """商品详情页"""
+
+    def get(self,request,sku_id):
+        """提供商品详情页"""
+        # 1.接收和校验参数
+        try:
+            # 查询sku是否合法
+            sku = SKU.objects.get(id=sku_id)
+        except SKU.DoesNotExist:
+            # return http.HttpResponseNotFound('sku_id不存在')
+            return render(request, '404.html')
+
+        # 2. 获取商品分类
+        categories = get_categories()
+
+        # 3. 获取商品面包屑导航（接收一个category类别)
+        breadcrumb = get_breadcrumb(sku.category) # 多查一： 通过sku对象.外键查询出 sku商品所属性类别
+
+        # 4. 构造上下文
+        context = {
+            'categories': categories, # 商品分类
+            'breadcrumb': breadcrumb, # 面包屑导航
+            'sku': sku # sku商品
+        }
+
+        # 5. 响应结果
+        return render(request,'detail.html', context)
+
+
 class HotGoodsView(View):
     """商品热销排行"""
 

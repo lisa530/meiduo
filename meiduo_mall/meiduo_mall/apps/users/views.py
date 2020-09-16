@@ -54,6 +54,28 @@ class UserBrowseHistory(LoginRequiredJSONMixin,View):
         # 响应结果
         return http.JsonResponse({'code': RETCODE.OK,'errmsg':'OK'})
 
+    def get(self, request):
+        """查询用户商品浏览记录"""
+        # 获取登录用户信息
+        user = request.user
+        # 创建连接到redis对象
+        redis_conn = get_redis_connection('history')
+        # 取出列表数据（核心代码）
+        sku_ids = redis_conn.lrange('history_%s' % user.id, 0, -1)  # (0, 4)
+
+        # 将模型转字典
+        skus = []
+        for sku_id in sku_ids:
+            sku = SKU.objects.get(id=sku_id)
+            skus.append({
+                'id': sku.id,
+                'name': sku.name,
+                'price': sku.price,
+                'default_image_url': sku.default_image.url
+            })
+
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'skus': skus})
+
 
 class ChangePasswordView(LoginRequiredMixin, View):
     """修改密码"""

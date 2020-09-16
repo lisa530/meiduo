@@ -2,12 +2,52 @@ from django.shortcuts import render
 from django.views import View
 from django import http
 from django.core.paginator import Paginator,EmptyPage
+from django.utils import timezone
+from datetime import datetime
 
-from goods.models import GoodsCategory,SKU
+from goods.models import GoodsCategory,SKU,GoodsVisitCount
 from contents.utils import get_categories
 from .utils import get_breadcrumb
 from . import constants
 from meiduo_mall.utils.response_code import RETCODE
+
+
+class DetailVisitView(View):
+    """统计分类商品的访问量"""
+
+    def post(self, request, category_id):
+        # 接收参数和校验参数
+        try:
+            category = GoodsCategory.objects.get(id=category_id)
+        except GoodsCategory.DoesNotExist:
+            return http.HttpResponseForbidden('category_id 不存在')
+
+        # 获取当天的日期
+        t = timezone.localtime()
+        # 获取当天的时间字符串
+        today_str = '%d-%02d-%02d' % (t.year, t.month, t.day)
+        # 将当天的时间字符串转成时间对象datetime，为了跟date字段的类型匹配 2019:05:23  2019-05-23
+        today_date = datetime.strptime(today_str, '%Y-%m-%d') # 时间字符串转时间对象；datetime.strftime() # 时间对象转时间字符串
+
+        # 判断当天中指定的分类商品对应的记录是否存在
+        try:
+            # 使用当前的日期和当前的分类作为条件，查询记录是否存在
+            counts_data = GoodsVisitCount.objects.get(date=today_date, category=category)
+        except GoodsVisitCount.DoesNotExist:
+            # 如果不存在，直接创建记录对应的对象
+            counts_data = GoodsVisitCount()
+
+        # 记录存在，为指定的分类商品的记录赋值
+        try:
+            counts_data.category = category
+            counts_data.count += 1
+            counts_data.date = today_date
+            counts_data.save()
+        except Exception as e:
+            return http.HttpResponseServerError('统计失败')
+
+        # 响应结果
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
 
 
 class DetailView(View):

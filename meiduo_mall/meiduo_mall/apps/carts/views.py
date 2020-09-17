@@ -229,3 +229,50 @@ class CartsView(View):
 
             # 返回响应结果
             return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '修改购物车成功', 'cart_sku': cart_sku})
+
+        else:
+            # 7. 用户未登录，修改cookie购物车
+            # 获取cookie中的购物车数据，并且判断是否有购物车数据
+            cart_str = request.COOKIES.get('carts')
+            if cart_str:  # 购物车有数据，将字符串转成字典
+                # 将 cart_str转成bytes类型的字符串
+                cart_str_bytes = cart_str.encode()
+                # 将cart_str_bytes转成bytes类型的字典
+                cart_dict_bytes = base64.b64decode(cart_str_bytes)
+                # 将cart_dict_bytes转成真正的字典
+                cart_dict = pickle.loads(cart_dict_bytes)
+            else: # cookie中没有购物车数据,构造一个空字典
+                cart_dict = {}
+
+            # 由于后端收到的是最终的结果，所以"覆盖写入"
+            cart_dict[sku_id] = {  # 覆盖购物车中的数据
+                'count': count,
+                'selected': selected
+            }
+
+            # 构造数据结构
+            cart_sku = {
+                'id': sku_id,
+                'count': count,
+                'selected': selected,
+                'name': sku.name,
+                'price': sku.price,
+                'amount': sku.price * count,
+                'default_image_url': sku.default_image.url
+            }
+
+            # 将python字典转为字符串
+            # 将cart_dict转成bytes类型的字典
+            cart_dict_bytes = pickle.dumps(cart_dict)
+            # 将cart_dict_bytes转成bytes类型的字符串
+            cart_str_bytes = base64.b64encode(cart_dict_bytes)
+            # 将cart_str_bytes转成字符串
+            cookie_cart_str = cart_str_bytes.decode()
+
+            # 创建响应对象
+            response = http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'cart_sku': cart_sku})
+            # 将新的购物车数据写入到cookie
+        response.set_cookie('carts', cookie_cart_str)
+
+        # 9、响应结果
+        return response

@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.views import View
-import json
+import json,base64,pickle
 from django import http
 from goods.models import SKU
 from django_redis import get_redis_connection
@@ -57,6 +57,49 @@ class CartsView(View):
             # 响应结果
             return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
         else:
-            pass
 
-        # 用户未登录,购物车数据存储到浏览器cookie中
+            # 用户未登录,获取cookie中的购物车数据，并且判断是否有购物车数据
+            cart_str = request.COOKIES.get('carts')
+            if cart_str: # 将字符串类型转为真正字典
+                # 将cart_str转成bytes类型的字符串
+                cart_str_bytes = cart_str.encode()
+                # 将cart_str_bytes转成bytes类型字典
+                cart_dict_bytes = base64.b64decode(cart_str_bytes)
+                # 将cart_dict_bytes转成真正的字典
+                cart_dict = pickle.loads(cart_str_bytes)
+            else: # cookie中没有购物车数据
+                cart_dict = {}
+
+            # 判断当前要添加的商品在cart_dict中是否存在
+            if sku_id in cart_dict:
+
+                """ 登录用户购物车数据结构
+                {
+                    sku_id:{
+                    count:"1",
+                    selected:"True"
+                }
+                """
+                # 购物车已存在，增量计算
+                origin_count = cart_dict[sku_id]['count']
+                count += origin_count # 将原有数据进行相加
+
+            # 购物车不存在，构造购物车cookie数据结构
+            cart_dict[sku_id] = {
+                'count': count,
+                'selected': selected
+            }
+
+            # 保存购物车数据
+            # 将cart_dict转成bytes类型的字典
+            cart_dict_bytes = pickle.dumps(cart_dict)
+            # 将cart_dict_bytes进行编码，得到编码后的bytes类型的字符串
+            cart_str_bytes = base64.b64encode(cart_dict_bytes)
+            # 将cart_str_bytes进行解码，得到解码后的字符串
+            cookie_cart_str = cart_str_bytes.decode()
+
+            response = http.JsonResponse({'code': RETCODE.OK,'errmsg':'OK'})
+            response.set_cookie('carts', cookie_cart_str)
+
+            # 响应结果
+            return response

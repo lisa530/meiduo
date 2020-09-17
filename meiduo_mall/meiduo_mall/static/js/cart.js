@@ -3,7 +3,7 @@ let vm = new Vue({
     delimiters: ['[[', ']]'],
     data: {
         username: getCookie('username'),
-        carts: carts,
+        carts: 'carts',
         total_count: 0,
         total_selected_count: 0,
         total_selected_amount: 0,

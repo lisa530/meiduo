@@ -106,5 +106,68 @@ class CartsView(View):
 
     def get(self,request):
         """查询购物车"""
+        # 判断用户是否登录
+        user = request.user
+        if user.is_authenticated:
+            # 用户已登录，查询redis购物车
+            redis_conn = get_redis_connection('carts')  # 创建链接到redis的对象
 
-        return render(request, 'cart.html')
+            # 从hash中查询购物车数据 {b'3': b'1'}
+            redis_cart = redis_conn.hgetall('carts_%s' % user.id) # hgetall返回的是一个字典
+            # 从set中查询购物车选中数据 {b'3'}
+            redis_selected = redis_conn.smembers('selected_%s' % user.id)
+
+            """
+                未登录用户cookie结构
+                {
+                    "sku_id1":{
+                        "count":"1",
+                        "selected":"True"
+                    },
+                
+                }
+             """
+            cart_dict = {}
+            # 将redis_cart和redis_selected进行数据结构的构造，合并数据，数据结构跟未登录用户购物车结构一致
+            for sku_id, count in redis_cart.items():
+                cart_dict[int(sku_id)] = {
+                    "count": int(count), # 在python3中redis存储的数据是bytes,转为int
+                    "selected": sku_id in redis_selected
+                }
+        else:
+            # 用户未登录,查询cookies购物车
+            cart_str =request.COOKIES.get('carts')
+            # 判断cart_str中是否有数据
+            if cart_str:
+                # 将 cart_str编码成bytes类型的字符串
+                cart_str_bytes = cart_str.encode()
+                # 将cart_str_bytes解码后得到bytes类型的字典
+                cart_dict_bytes = base64.b64decode(cart_str_bytes)
+                # 将cart_dict_bytes转成真正的字典
+                cart_dict = pickle.loads(cart_dict_bytes)
+            else:
+                cart_dict = {}
+
+        # 构造响应数据
+        sku_ids = cart_dict.keys()  # 获取字典中所有的key,(sku_id)
+        skus = SKU.objects.filter(id__in=sku_ids) # 范围查询
+        cart_skus = []
+        for sku in skus:
+            cart_skus.append({
+                'id':sku.id,
+                'count': cart_dict.get(sku.id).get('count'),
+                # 将True，转'True'，方便json解析
+                'selected':str(cart_dict.get(sku.id).get('selected')),
+                'name':sku.name,
+                'default_image_url': sku.default_image.url,
+                'price': str(sku.price),
+                'amount': str(sku.price * cart_dict.get(sku.id).get('count'))
+            })
+
+        # 构造上下文
+        context = {
+            'cart_skus': cart_skus
+        }
+
+        # 响应结果
+        return render(request, 'cart.html', context)

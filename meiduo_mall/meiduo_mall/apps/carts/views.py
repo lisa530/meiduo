@@ -171,3 +171,61 @@ class CartsView(View):
 
         # 响应结果
         return render(request, 'cart.html', context)
+
+    def put(self, request):
+        """修改购物车"""
+        # 1. 接收参数
+        json_dict = json.loads(request.body.decode())
+        sku_id = json_dict.get('sku_id')
+        count = json_dict.get('count')
+        selected = json_dict.get('selected', True)
+
+        # 2. 判断参数是否齐全
+        if not all([sku_id, count]):
+            return http.HttpResponseForbidden('缺少必传参数')
+        # 3. 判断sku_id是否存在
+        try:
+            sku = SKU.objects.get(id=sku_id)
+        except SKU.DoesNotExist:
+            return http.HttpResponseForbidden('商品sku_id不存在')
+        # 4. 判断count是否为数字
+        try:
+            count = int(count)
+        except Exception:
+            return http.HttpResponseForbidden('参数count有误')
+        # 5. 判断selected是否为bool值
+        if selected:
+            if not isinstance(selected, bool):
+                return http.HttpResponseForbidden('参数selected有误')
+
+        # 6. 判断用户是否登录
+        user = request.user
+        if user.is_authenticated:
+            # 用户已登录，修改redis购物车
+            redis_conn = get_redis_connection('carts')
+            pl = redis_conn.pipeline()
+
+            # 由于后端收到的数据是最终的结果，所以"覆盖写入"
+
+            pl.hset('carts_%s' % user.id, sku_id, count)  # 重新写入值到hash表中
+            # 修改勾选状态
+            if selected:
+                pl.sadd('selected_%s' % user.id, sku_id)  # 添加sku_id到set集合中
+            else:  # 没有勾选，从set中删除sku_id
+                pl.srem('selected_%s' % user.id, sku_id)
+            # 执行
+            pl.execute()
+
+            # 创建响应对象
+            cart_sku = {
+                'id': sku_id,
+                'count': count,
+                'selected': selected,
+                'name': sku.name,
+                'price': sku.price,
+                'amount': sku.price * count,
+                'default_image_url': sku.default_image.url
+            }
+
+            # 返回响应结果
+            return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '修改购物车成功', 'cart_sku': cart_sku})

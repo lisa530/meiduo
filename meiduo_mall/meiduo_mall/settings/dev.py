@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'oauth', # QQ登录
     'areas', # 省市区
     'goods', # 商品
+    'carts', # 购物车
 
     'haystack', # 全文检索
 ]
@@ -148,6 +149,13 @@ CACHES = {
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
             }
+    },
+    "carts": {  # 购物车
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/4",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
     },
 }
 # 使用session作为后端

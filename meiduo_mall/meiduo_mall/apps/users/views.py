@@ -9,13 +9,15 @@ from django.contrib.auth import login,logout
 from django_redis import get_redis_connection
 from django.contrib.auth import authenticate
 from django.contrib.auth.mixins import LoginRequiredMixin
+from goods.models import SKU
 
 from meiduo_mall.utils.response_code import RETCODE
 from meiduo_mall.utils.views import LoginRequiredJSONMixin
 from celery_tasks.email.tasks import send_verify_email
 from . utils import generate_verify_email_url,check_verify_email_token
 from . import constants
-from goods.models import SKU
+from carts.utils import merge_carts_cookies_redis
+
 
 
 # 创建日志输出器
@@ -491,6 +493,8 @@ class LoginView(View):
         # 用户名写入到cookie中，过期时间为两周
         # response.set_cookie('key', 'val', 'expiry')
         response.set_cookie('username', user.username,max_age=3600 * 24 * 15)
+        # 用户登录成功，合并cookie购物车到redis购物车
+        response = merge_carts_cookies_redis(request=request, user=user, response=response)
 
         # 5. 响应结果
         return response

@@ -132,7 +132,7 @@ class CartsView(View):
                 # 将cart_str_bytes转成bytes类型字典
                 cart_dict_bytes = base64.b64decode(cart_str_bytes)
                 # 将cart_dict_bytes转成真正的字典
-                cart_dict = pickle.loads(cart_str_bytes)
+                cart_dict = pickle.loads(cart_dict_bytes)
             else: # cookie中没有购物车数据
                 cart_dict = {}
 

@@ -8,6 +8,61 @@ from django_redis import get_redis_connection
 from meiduo_mall.utils.response_code import RETCODE
 
 
+class CartsSimpleView(View):
+    """商品页面右上角展示购物车"""
+
+    def get(self, request):
+        # 1. 判断用户是否登录
+        user = request.user
+        if user.is_authenticated:
+            # 2. 用户已登录,查询redis购物车
+            redis_conn = get_redis_connection('carts')
+            # 获取hash中所有数据
+            redis_cart = redis_conn.hgetall('carts_%s' % user.id)
+            # 获取选中的商品
+            cart_selected = redis_conn.smembers('selected_%s' % user.id)
+
+            # 3. # 将redis中的两个数据格式和cookie数据格式进行统一,方便查询
+            """cookie购物车数据结构
+            {
+                "sku_id": {
+                "count": "1",
+                "selected": "True"
+                },
+            }
+            """
+            cart_dict = {}
+            for sku_id, count in redis_cart.items():  # 遍历字典,得到key和value
+                cart_dict[int(sku_id)] = {  # 给sku_id字典赋值
+                    'count': int(count),
+                    'selected': sku_id in cart_selected
+                }
+
+        # 4. 用户未登录,查询cookie购物车
+        else:
+            cart_str = request.COOKIES.get('carts')
+            if cart_str:  # 购物车有数据,获取cookie中购物车数据
+                cart_dict = pickle.loads(base64.b64decode(cart_str.encode()))
+            else:  # 购物车没有数据
+                cart_dict = {}
+
+        cart_skus = []
+        sku_ids = cart_dict.keys()  # 取出cart_dict中所有的key
+
+        skus = SKU.objects.filter(id__in=sku_ids)
+        for sku in skus:  # 遍历skus商品模型类
+            # 将模板类对象构造成字典列表
+            cart_skus.append({
+                'id': sku.id,
+                'name': sku.name,
+                'count': cart_dict.get(sku.id).get('count'), # 购物车SKU数量
+                'default_image_url': sku.default_image.url
+            })
+
+        # 返回JSON数据
+        return http.JsonResponse({'code': RETCODE.OK, 'errmssg': 'OK', 'cart_skus': cart_skus})
+
+
 class CartsSelectAllView(View):
     """全选购物车"""
 

@@ -28,7 +28,7 @@
 					<span>|</span>
 					<a href="{{ url('users:info') }}">用户中心</a>
 					<span>|</span>
-					<a href="cart.html">我的购物车</a>
+					<a href="{{ url('carts:info') }}">我的购物车</a>
 					<span>|</span>
 					<a href="user_center_order.html">我的订单</a>
 				</div>
@@ -50,7 +50,7 @@
 			</ul>
 		</div>
 		<div class="guest_cart fr">
-			<a href="cart.html" class="cart_name fl">我的购物车</a>
+			<a href="{{ url('carts:info') }}" class="cart_name fl">我的购物车</a>
 			<div class="goods_count fl" id="show_count">2</div>
 			<ul class="cart_goods_show">
 				<li>
@@ -71,22 +71,18 @@
 			<div class="sub_menu_con fl">
 				<h1 class="fl">商品分类</h1>
 				<ul class="sub_menu">
-                    {# 遍历所有频道组#}
                     {% for group in categories.values() %}
                     <li>
                         <div class="level1">
-                            {#  遍历所有频道(一级分类)#}
                             {% for channel in group.channels %}
                             <a href="{{ channel.url }}">{{ channel.name }}</a>
                             {% endfor %}
                         </div>
                         <div class="level2">
-                            {#   通过一级查询二级#}
                             {% for cat2 in group.sub_cats %}
                             <div class="list_group">
                                 <div class="group_name fl">{{ cat2.name }} &gt;</div>
                                 <div class="group_detail fl">
-                                    {#    通过二级分类查询三级分类#}
                                     {% for cat3 in cat2.sub_cats %}
                                     <a href="/list/{{ cat3.id }}/1/">{{ cat3.name }}</a>
                                     {% endfor %}
@@ -108,12 +104,12 @@
 		</div>
 	</div>
 	<div class="breadcrumb">
-        <a href="javascript:;">{{ breadcrumb.cat1.name }}</a>
+		<a href="javascript:;">{{ breadcrumb.cat1.name }}</a>
+		<span>></span>
+		<a href="javascript:;">{{ breadcrumb.cat2.name }}</a>
         <span>></span>
-        <a href="javascript:;">{{ breadcrumb.cat2.name }}</a>
-        <span>></span>
-        <a href="javascript:;">{{ breadcrumb.cat3.name }}</a>
-</div>
+		<a href="javascript:;">{{ breadcrumb.cat3.name }}</a>
+	</div>
 	<div class="goods_detail_con clearfix">
 		<div class="goods_detail_pic fl"><img src="{{ sku.default_image.url }}"></div>
 		<div class="goods_detail_list fr">
@@ -129,7 +125,7 @@
 					<input v-model="sku_count" @blur="check_sku_count" type="text" class="num_show fl">
                     <a @click="on_addition" class="add fr">+</a>
                     <a @click="on_minus" class="minus fr">-</a>
-				</div>
+				</div> 
 			</div>
 			{% for spec in specs %}
             <div class="type_select">
@@ -220,9 +216,9 @@
 	</div>
 	</div>
     <script type="text/javascript">
-		let category_id = "{{ sku.category_id }}";
+		let category_id = "{{ sku.category.id }}";
 		let sku_price = "{{ sku.price }}";
-         let sku_id = "{{ sku.id }}";
+        let sku_id = "{{ sku.id }}";
     </script>
 	<script type="text/javascript" src="{{ static('js/common.js') }}"></script>
 	<script type="text/javascript" src="{{ static('js/detail.js') }}"></script>

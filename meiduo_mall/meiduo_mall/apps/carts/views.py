@@ -103,3 +103,8 @@ class CartsView(View):
 
             # 响应结果
             return response
+
+    def get(self,request):
+        """查询购物车"""
+
+        return render(request, 'cart.html')

@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'areas', # 省市区
     'goods', # 商品
     'carts', # 购物车
+    'orders', # 订单
 
     'haystack', # 全文检索
 ]

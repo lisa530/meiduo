@@ -8,4 +8,6 @@ urlpatterns = [
     url(r'^orders/commit/$', views.OrderCommitView.as_view()),
     # 提交订单成功
     url(r'^orders/success/$', views.OrderSuccessView.as_view()),
+    # 我的订单
+    url(r'^orders/info/(?P<page_num>\d+)/$', views.UserOrderInfoView.as_view(), name='info'),
 ]

@@ -97,36 +97,61 @@ class OrderCommitView(LoginRequiredJSONMixin, View):
                 # 获取被勾选的商品的sku_id和count
                 sku_ids = new_cart_dict.keys()  # 取出字典中所有的key : sku_id count
                 for sku_id in sku_ids:  # 遍历购物车中被勾选的商品信息
-                    # 查询SKU信息
-                    sku = SKU.objects.get(id=sku_id)
 
-                    # 获取要提交的订单的商品数量
-                    sku_count = new_cart_dict[sku_id]
-                    #  库存不足,回滚
-                    if sku_count > sku.stock:
-                        transaction.savepoint_rollback(save_id)
-                        return http.JsonResponse({'code': RETCODE.STOCKERR, 'errmsg': '库存不足'})
+                    # 每个商品都有多次下单的机会，直到库存不足
+                    while True:
+                        # 查询SKU信息
+                        sku = SKU.objects.get(id=sku_id)
 
-                    # SKU 减少库存，加销量
-                    sku.stock -= sku_count
-                    sku.sales += sku_count
-                    sku.save()
+                        # 获取原有的库存和销量
+                        origin_stock = sku.stock
+                        origin_sales = sku.sales
 
-                    # SPU 加销量
-                    sku.spu.sales += sku_count # 一查多: 一个sku对应多个spu
-                    sku.spu.save()
+                        # 获取要提交的订单的商品数量
+                        sku_count = new_cart_dict[sku_id]
+                        #  库存不足,回滚
+                        if sku_count > sku.stock:
+                            transaction.savepoint_rollback(save_id)
+                            return http.JsonResponse({'code': RETCODE.STOCKERR, 'errmsg': '库存不足'})
 
-                    # 保存订单商品信息
-                    OrderGoods.objects.create(
-                        order=order,  # 关联的订单对象
-                        sku=sku,  # 订单商品
-                        count=sku_count,  # 商品数量
-                        price=sku.price,  # 商品价格
-                    )
+                        # 模拟网络延迟
+                        import time
+                        time.sleep(7)
 
-                    # 累加商品订单的数量和总价到订单基本信息表
-                    order.total_count += sku_count
-                    order.total_amount += sku_count * sku.price
+                        # SKU 减少库存，加销量
+                        # sku.stock -= sku_count
+                        # sku.sales += sku_count
+                        # sku.save()
+
+                        # SKU 减少库存，加销量
+                        new_stock = origin_stock - sku_count # 原有库存 - 原有数量
+                        new_sales = origin_sales + sku_count # 原有销量 + 原有数量
+
+                        # 使用乐观锁更新和销量
+                        # 使用原有数据为条件，查询是否有人修改库存记录，得到原有数据结果，使用新的存和销量覆盖原有的
+                        result = SKU.objects.filter(id=sku_id,stock=origin_stock).update(stock=new_stock, sales=new_sales)
+
+                        # 库存 10，要买1，但是在下单时，有资源抢夺，被买走1，剩下9个，如果库存依然满足，继续下单，直到库存不足为止
+                        if result == 0:  # result表示sql语句修改数据的个数
+                            continue
+
+                        # SPU 加销量
+                        sku.spu.sales += sku_count # 一查多: 一个sku对应多个spu
+                        sku.spu.save()
+
+                        # 保存订单商品信息
+                        OrderGoods.objects.create(
+                            order=order,  # 关联的订单对象
+                            sku=sku,  # 订单商品
+                            count=sku_count,  # 商品数量
+                            price=sku.price,  # 商品价格
+                        )
+
+                        # 累加商品订单的数量和总价到订单基本信息表
+                        order.total_count += sku_count
+                        order.total_amount += sku_count * sku.price
+                        # 下单成功,记得brack
+                        break
 
                 # 再加最后的运费
                 order.total_amount += order.freight

@@ -296,3 +296,11 @@ HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
 
 # 设置haystack返回搜索商品结果每页显示的数量
 HAYSTACK_SEARCH_RESULTS_PER_PAGE = 5
+
+# 支付宝配置
+ALIPAY_APPID = '2016101700711184' # 沙箱应用 ID
+ALIPAY_DEBUG = True # 设置为true表示使用沙箱,设置为False为正式环境
+# 支付宝网关 固定不能改
+ALIPAY_URL = 'https://openapi.alipaydev.com/gateway.do'
+# 支付成功后,支付宝返回成功后的回调地址
+ALIPAY_RETURN_URL = 'http://www.meiduo.site:8000/payment/status/'

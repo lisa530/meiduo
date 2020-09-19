@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'goods', # 商品
     'carts', # 购物车
     'orders', # 订单
+    'payment', # 支付
 
     'haystack', # 全文检索
 ]

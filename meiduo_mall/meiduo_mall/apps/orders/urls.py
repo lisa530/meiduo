@@ -12,4 +12,6 @@ urlpatterns = [
     url(r'^orders/info/(?P<page_num>\d+)/$', views.UserOrderInfoView.as_view(), name='info'),
     # 订单评价
     url(r'^orders/comment/$', views.OrderCommentView.as_view()),
+    # 展示商品评价
+    url(r'^comments/(?P<sku_id>\d+)/$',views.GoodsCommentView.as_view()),
 ]

@@ -33,7 +33,7 @@
 					<a href="{{ url('orders:info',args=(1,)) }}">我的订单</a>
 				</div>
 			</div>
-		</div>		
+		</div>
 	</div>
 	<div class="search_bar clearfix">
 		<a href="{{ url('contents:index') }}" class="logo fl"><img src="{{ static('images/logo.png') }}"></a>
@@ -63,7 +63,7 @@
 					<h4>Apple iPhoneX 64GB 深空灰色 移动联通电信4G手机</h4>
 					<div>1</div>
 				</li>
-			</ul>			
+			</ul>
 		</div>
 	</div>
 	<div class="navbar_con">
@@ -117,7 +117,7 @@
 			<p>{{ sku.caption }}</p>
 			<div class="price_bar">
 				<span class="show_pirce">¥<em>{{ sku.price }}</em></span>
-				<a href="javascript:;" class="goods_judge">18人评价</a>
+				<a href="javascript:;" class="goods_judge">>[[ comments.length ]]人评价</a>
 			</div>
 			<div class="goods_num clearfix">
 				<div class="num_name fl">数 量：</div>
@@ -125,7 +125,7 @@
 					<input v-model="sku_count" @blur="check_sku_count" type="text" class="num_show fl">
                     <a @click="on_addition" class="add fr">+</a>
                     <a @click="on_minus" class="minus fr">-</a>
-				</div> 
+				</div>
 			</div>
 			{% for spec in specs %}
             <div class="type_select">
@@ -165,7 +165,7 @@
 				<li @click="on_tab_content('detail')" :class="tab_content.detail?'active':''">商品详情</li>
 				<li @click="on_tab_content('pack')" :class="tab_content.pack?'active':''">规格与包装</li>
 				<li @click="on_tab_content('service')" :class="tab_content.service?'active':''">售后服务</li>
-                <li @click="on_tab_content('comment')" :class="tab_content.comment?'active':''">商品评价(18)</li>
+                <li @click="on_tab_content('comment')" :class="tab_content.comment?'active':''">商品评价([[ comments.length ]])</li>
 			</ul>
 			<div @click="on_tab_content('detail')" class="tab_content" :class="tab_content.detail?'current':''">
 				<dl>
@@ -186,19 +186,18 @@
 				</dl>
 			</div>
             <div @click="on_tab_content('comment')" class="tab_content" :class="tab_content.comment?'current':''">
-				<ul class="judge_list_con">
-					<li class="judge_list fl">
-						<div class="user_info fl">
-							<img src="{{ static('images/cat.jpg') }}">
-							<b>张***厨</b>
-						</div>
-						<div class="judge_info fl">
-							<div class="stars_five"></div>
-							<div class="judge_detail">派送非常快，第二天上午就收到。2天使用初步总结，前一部手机也是华为P9plus.MATE10pro包装原封未拆精致大气。拆开后第一眼就看到宝石蓝的手机，非常惊艳；然后就是配件一应俱全。开机各方面设置，把通讯录、短信等同步好，同品牌手机同步很快。和P9plus一样的后置指纹识别很方便。录制指纹容易，解锁非常快，秒开！屏幕完好，默认分辨率显示效果很好。</div>
-						</div>
-					</li>			
-				</ul>
-			</div>
+            <ul class="judge_list_con">
+                <li class="judge_list fl" v-for="comment in comments">
+                    <div class="user_info fl">
+                        <b>[[comment.username]]</b>
+                    </div>
+                    <div class="judge_info fl">
+                        <div :class="comment.score_class"></div>
+                        <div class="judge_detail">[[comment.comment]]</div>
+                    </div>
+                </li>
+            </ul>
+        </div>
 		</div>
 	</div>
 	<div class="footer">
@@ -209,7 +208,7 @@
 			<span>|</span>
 			<a href="#">招聘人才</a>
 			<span>|</span>
-			<a href="#">友情链接</a>		
+			<a href="#">友情链接</a>
 		</div>
 		<p>CopyRight © 2016 北京美多商业股份有限公司 All Rights Reserved</p>
 		<p>电话：010-****888    京ICP备*******8号</p>

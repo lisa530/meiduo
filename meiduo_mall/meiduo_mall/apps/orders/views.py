@@ -17,6 +17,29 @@ from django.core.paginator import Paginator, EmptyPage
 from . import constants
 
 
+class GoodsCommentView(View):
+    """订单商品评价信息"""
+
+    def get(self, request, sku_id):
+        """展示详情页被评价的商品信息"""
+
+        # 1. 获取评价后的订单商品信息(按最新评价的商品排序)
+        order_goods_list = OrderGoods.objects.filter(sku_id=sku_id, is_commented=True).order_by('-create_time')[:30]
+        # 2. 将订单商品对象构造成列表字典
+        comment_list = []
+        for order_goods in order_goods_list:
+            username = order_goods.order.user.username # 多查一: 多类对象.外键 获取下单用户
+            comment_list.append({
+                # 通过 三目运算获取下单用户
+                'username': username[0] + '***' + username[-1] if order_goods.is_anonymous else username,
+                'comment': order_goods.comment, # 商品评价信息
+                'score': order_goods.score, # 评分
+            })
+
+        # 返回响应对象
+        return http.JsonResponse({'code':RETCODE.OK, 'errmsg':'OK', 'comment_list': comment_list})
+
+
 class OrderCommentView(LoginRequiredMixin, View):
     """订单商品评价"""
 

@@ -17,6 +17,100 @@ from django.core.paginator import Paginator, EmptyPage
 from . import constants
 
 
+class OrderCommentView(LoginRequiredMixin, View):
+    """订单商品评价"""
+
+    def get(self, request):
+        """展示商品评价页面"""
+        # 接收参数
+        order_id = request.GET.get('order_id')
+        user = request.user  # 获取登录用户
+        # 校验order_id参数是否有效
+        try:
+            OrderInfo.objects.get(order_id=order_id, user=request.user)
+        except OrderInfo.DoesNotExist:
+            return http.HttpResponseNotFound('订单不存在')
+
+        # 查询商品订单中未被评价的商品信息
+        try:
+            uncomment_goods = OrderGoods.objects.filter(order_id=order_id, is_commented=False)
+        except Exception:
+            return http.HttpResponseServerError('订单商品信息出错')
+
+        # 构造待评价商品数据
+        uncomment_goods_list = []
+        for goods in uncomment_goods:
+            uncomment_goods_list.append({
+                'order_id': goods.order.order_id, # 订单id
+                'sku_id': goods.sku.id,  # 多查一,多类对象.外键
+                'name': goods.sku.name, # 商品名称
+                'price': str(goods.price), # 商品价格
+                'default_image_url': goods.sku.default_image.url,
+                'comment': goods.comment, # 评价信息
+                'score': goods.score, # 评分
+                'is_anonymous': str(goods.is_anonymous), # 是否匿名评价
+            })
+
+        # 渲染模板
+        context = {
+            'skus': uncomment_goods_list
+        }
+
+        # 返回响应对象
+        return render(request, 'goods_judge.html', context)
+
+    def post(self, request):
+        """保存评价订单商品"""
+
+        # 1.接收参数(json)
+        json_dict = json.loads(request.body.decode())
+        order_id = json_dict.get('order_id')
+        sku_id = json_dict.get('sku_id')
+        score = json_dict.get('score')
+        comment = json_dict.get('comment')
+        is_anonymous = json_dict.get('is_anonymous')
+
+        # 2. 检验所有参数
+        if not all([order_id, sku_id, score, comment]):
+            return http.HttpResponseForbidden('缺少必传参数')
+
+        # 3. 查询订单信息, 条件为: 当前登录的用户, 订单状态为 待评价
+        try:
+            OrderInfo.objects.filter(order_id=order_id, user=request.user,
+                                     status=OrderInfo.ORDER_STATUS_ENUM['UNCOMMENT'])
+        except OrderInfo.DoesNotExist:
+            return http.HttpResponseForbidden('参数order_id错误')
+        # 4. 查询sku_id是否合格
+        try:
+            sku = SKU.objects.get(id=sku_id)
+        except SKU.DoesNotExist:
+            return http.HttpResponseForbidden('参数sku_id错误')
+        # 5. 判断是否是 匿名评价
+        if is_anonymous:
+            if not isinstance(is_anonymous, bool):
+                return http.HttpResponseForbidden('参数is_anonymous错误')
+
+        # 6.查询出未评价的订单商品数据,并为商品订单赋值
+        OrderGoods.objects.filter(order_id=order_id, sku_id=sku_id, is_commented=False).update(
+            comment=comment,  # 评价信息
+            score=score,  # 评分
+            is_anonymous=is_anonymous,  # 是否匿名
+            is_commented=True  # 是否评价
+        )
+
+        #  累计sku商品评论数量
+        sku.comments += 1
+        sku.save()
+        sku.spu.comments += 1
+        sku.spu.save()
+
+        # 如果所有订单商品都已评价，则修改订单状态为已完成
+        if OrderGoods.objects.filter(order_id=order_id, is_commented=False).count() == 0:
+            OrderInfo.objects.filter(order_id=order_id).update(status=OrderInfo.ORDER_STATUS_ENUM['FINISHED'])
+        # 7. 返回响应对象
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
+
+
 class UserOrderInfoView(LoginRequiredMixin, View):
     """我的订单"""
 

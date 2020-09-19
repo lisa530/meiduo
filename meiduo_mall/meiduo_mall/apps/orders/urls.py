@@ -10,4 +10,6 @@ urlpatterns = [
     url(r'^orders/success/$', views.OrderSuccessView.as_view()),
     # 我的订单
     url(r'^orders/info/(?P<page_num>\d+)/$', views.UserOrderInfoView.as_view(), name='info'),
+    # 订单评价
+    url(r'^orders/comment/$', views.OrderCommentView.as_view()),
 ]

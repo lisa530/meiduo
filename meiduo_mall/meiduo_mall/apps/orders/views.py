@@ -104,77 +104,87 @@ class OrderCommitView(LoginRequiredJSONMixin, View):
         if pay_method not in [OrderInfo.PAY_METHODS_ENUM['CASH'], OrderInfo.PAY_METHODS_ENUM['ALIPAY']]:
             return http.HttpResponseForbidden('参数pay_method错误')
 
-        # 获取登录用户
-        user = request.user
-        # 获取订单编号：时间+user_id == '20190526165742000000001'
-        order_id = timezone.localtime().strftime('%Y%m%d%H%M%S') + ('%09d' % user.id)
-        # 保存订单基本信息（一）
-        order = OrderInfo.objects.create(
-            order_id=order_id, # 订单id
-            user=user, # 当前登录用户
-            address=address,
-            total_count=0,
-            total_amount=Decimal(0.00), # 总金额
-            freight=Decimal(10.00), # 运费
-            pay_method=pay_method, # 支付方式
-            # status = 'UNPAID' if pay_method=='ALIPAY' else 'UNSEND'
-            status=OrderInfo.ORDER_STATUS_ENUM['UNPAID'] if pay_method == OrderInfo.PAY_METHODS_ENUM[
-                'ALIPAY'] else OrderInfo.ORDER_STATUS_ENUM['UNSEND']
-        )
+        # 明显的开启一次事务
+        with transaction.atomic():
+            # 在数据库操作之前需要指定保存点（保存数据库最初的状态）
+            save_id = transaction.savepoint()
 
-        # 保存订单商品信息（多）
-        # 查询redis购物车中被勾选的商品
-        redis_conn = get_redis_connection('carts')
-        # 所有的购物车数据，包含了勾选和未勾选 ：{b'1': b'1', b'2': b'2'}
-        redis_cart = redis_conn.hgetall('carts_%s' % user.id)
-        # 被勾选的商品的sku_id：[b'1']
-        redis_selected = redis_conn.smembers('selected_%s' % user.id)
-
-        # 构造购物车中被勾选的商品的数据 {b'1': b'1'}
-        new_cart_dict = {}
-        for sku_id in redis_selected:
-            # 取出购物车中所有数据, (sku_id count) 赋值给new_cart_dict
-            new_cart_dict[int(sku_id)] = int(redis_cart[sku_id])
-
-        # 获取被勾选的商品的sku_id
-        sku_ids = new_cart_dict.keys()
-        for sku_id in sku_ids:
-            # 读取购物车商品信息
-            sku = SKU.objects.get(id=sku_id)  # 查询商品和库存信息时，不能出现缓存，所以没用filter(id__in=sku_ids)
-
-            # 获取要提交订单的商品的数量
-            sku_count = new_cart_dict[sku.id]
-            # 判断商品数量是否大于库存，如果大于，响应"库存不足"
-            if sku_count > sku.stock:
-                # 库存不足
-                return http.JsonResponse({'code': RETCODE.STOCKERR, 'errmsg': '库存不足'})
-
-                # SKU 减库存，加销量
-                sku.stock -= sku_count
-                sku.sales += sku_count
-                sku.save()
-
-                # SPU 加销量
-                sku.spu.sales += sku_count  # 一查多: 一个sku对应多个spu
-                sku.spu.save()
-
-                # 保存订单商品信息
-                OrderGoods.objects.create(
-                    order=order,  # 关联的订单对象
-                    sku=sku,
-                    count=sku_count,
-                    price=sku.price,
+            # 暴力回滚
+            try:
+                # 获取登录用户
+                user = request.user
+                # 获取订单编号：时间+user_id == '20190526165742000000001'
+                order_id = timezone.localtime().strftime('%Y%m%d%H%M%S') + ('%09d' % user.id)
+                # 保存订单基本信息（一）
+                order = OrderInfo.objects.create(
+                    order_id=order_id, # 订单id
+                    user=user, # 当前登录用户
+                    address=address,
+                    total_count=0,
+                    total_amount=Decimal(0.00), # 总金额
+                    freight=Decimal(10.00), # 运费
+                    pay_method=pay_method, # 支付方式
+                    # status = 'UNPAID' if pay_method=='ALIPAY' else 'UNSEND'
+                    status=OrderInfo.ORDER_STATUS_ENUM['UNPAID'] if pay_method == OrderInfo.PAY_METHODS_ENUM[
+                        'ALIPAY'] else OrderInfo.ORDER_STATUS_ENUM['UNSEND']
                 )
 
-                # 累加订单商品的数量和总价到订单基本信息表
-                order.total_count += sku_count
-                order.total_amount += sku_count * sku.price
+                # 保存订单商品信息（多）
+                # 查询redis购物车中被勾选的商品
+                redis_conn = get_redis_connection('carts')
+                # 所有的购物车数据，包含了勾选和未勾选 ：{b'1': b'1', b'2': b'2'}
+                redis_cart = redis_conn.hgetall('carts_%s' % user.id)
+                # 被勾选的商品的sku_id：[b'1']
+                redis_selected = redis_conn.smembers('selected_%s' % user.id)
 
-            # 再加最后的运费
-            order.total_amount += order.freight
-            order.save()
+                # 构造购物车中被勾选的商品的数据 {b'1': b'1'}
+                new_cart_dict = {}
+                for sku_id in redis_selected:
+                    # 取出购物车中所有数据, (sku_id count) 赋值给new_cart_dict
+                    new_cart_dict[int(sku_id)] = int(redis_cart[sku_id])
 
-            return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'order_id': order_id})
+                # 获取被勾选的商品的sku_id
+                sku_ids = new_cart_dict.keys()
+                for sku_id in sku_ids:
+                    # 读取购物车商品信息
+                    sku = SKU.objects.get(id=sku_id)  # 查询商品和库存信息时，不能出现缓存，所以没用filter(id__in=sku_ids)
+
+                    # 获取要提交订单的商品的数量
+                    sku_count = new_cart_dict[sku.id]
+                    # 判断商品数量是否大于库存，如果大于，响应"库存不足"
+                    if sku_count > sku.stock:
+                        # 库存不足，回滚
+                        transaction.savepoint_rollback(save_id)
+                        return http.JsonResponse({'code': RETCODE.STOCKERR, 'errmsg': '库存不足'})
+
+                    # SKU 减库存，加销量
+                    sku.stock -= sku_count
+                    sku.sales += sku_count
+                    sku.save()
+
+                    # SPU 加销量
+                    sku.spu.sales += sku_count  # 一查多: 一个sku对应多个spu
+                    sku.spu.save()
+
+                    # 保存订单商品信息
+                    OrderGoods.objects.create(
+                        order=order,  # 关联的订单对象
+                        sku=sku,
+                        count=sku_count,
+                        price=sku.price,
+                    )
+
+                    # 累加订单商品的数量和总价到订单基本信息表
+                    order.total_count += sku_count
+                    order.total_amount += sku_count * sku.price
+
+                # 再加最后的运费
+                order.total_amount += order.freight
+                order.save()
+
+            except Exception as e:  # 数据库操作失败,回滚
+                transaction.savepoint_rollback(save_id)
+                return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '下单失败'})
 
 
 class OrderSettlementView(LoginRequiredMixin,View):

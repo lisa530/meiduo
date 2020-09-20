@@ -116,8 +116,19 @@ DATABASES = {
         'PASSWORD': '123456',
         'USER':'lisa',
         'NAME': 'meiduo'
+    },
+    'slave': { # 读（从机）
+            'ENGINE': 'django.db.backends.mysql',
+            'HOST': '127.0.0.1',
+            'PORT': 8306,
+            'USER': 'root',
+            'PASSWORD': 'mysql',
+            'NAME': 'meiduo'
+        }
     }
-}
+
+# 配置mysql读取分离路由
+DATABASE_ROUTERS = ['meiduo_mall.utils.db_router.MasterSlaveDBRouter']
 
 # 配置redis数据库
 CACHES = {
